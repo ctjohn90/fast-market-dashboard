@@ -18,7 +18,7 @@
             padding: 1.5rem;
         }
         
-        .container { max-width: 1600px; margin: 0 auto; }
+        .container { max-width: 100%; margin: 0 auto; padding: 0 1rem; }
         
         .header {
             display: flex;
@@ -100,8 +100,8 @@
         .alert-level { font-weight: 600; }
         
         /* Chart */
-        .chart-container { margin-bottom: 1rem; width: 100%; }
-        #chart { height: 420px; width: 100%; }
+        .chart-container { margin-bottom: 1rem; width: 100%; box-sizing: border-box; }
+        #chart { height: 450px; width: 100%; min-width: 100%; }
         
         /* Event Legend */
         .event-legend {
@@ -864,26 +864,24 @@
                 hovertemplate: 'Stress: %{y:.1f}<extra></extra>',
             };
             
-            // S&P 500 return trace - INVERTED (negative returns go up)
-            const sp500Inverted = sp500Adjusted.map(v => -v);
+            // S&P 500 return trace - plot actual values, invert the AXIS (not the data)
             const traceSP500 = {
-                x: dates, y: sp500Inverted,
+                x: dates, y: sp500Adjusted,
                 type: 'scatter', mode: 'lines',
                 line: { color: '#a855f7', width: 2 },
-                name: 'S&P 500 (inverted)',
+                name: 'S&P 500 Return',
                 yaxis: 'y2',
-                hovertemplate: 'S&P Return: %{text}<extra></extra>',
-                text: sp500Adjusted.map(v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'),
+                hovertemplate: 'S&P: %{y:+.1f}%<extra></extra>',
             };
             
-            // Calculate y2 range for inverted values
-            const minInv = Math.min(...sp500Inverted);
-            const maxInv = Math.max(...sp500Inverted);
-            const invPadding = Math.max(3, (maxInv - minInv) * 0.15);
+            // Calculate y2 range - INVERTED (high values at bottom, low at top)
+            const minSP = Math.min(...sp500Adjusted);
+            const maxSP = Math.max(...sp500Adjusted);
+            const spPadding = Math.max(5, (maxSP - minSP) * 0.1);
             
             const layout = {
                 paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-                margin: { t: 30, r: 70, b: 50, l: 60 },
+                margin: { t: 30, r: 80, b: 50, l: 60 },
                 xaxis: { showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: { size: 11 }, tickformat: '%b %d' },
                 yaxis: { 
                     showgrid: true, gridcolor: '#1e293b', color: '#3b82f6', tickfont: { size: 11, color: '#3b82f6' }, 
@@ -893,10 +891,10 @@
                 yaxis2: {
                     overlaying: 'y', side: 'right',
                     showgrid: false, color: '#a855f7', tickfont: { size: 11, color: '#a855f7' },
-                    range: [minInv - invPadding, maxInv + invPadding],
+                    range: [maxSP + spPadding, minSP - spPadding],  // INVERTED: high at bottom
                     tickformat: '+.0f',
                     ticksuffix: '%',
-                    title: { text: 'S&P 500 (inverted)', font: { size: 12, color: '#a855f7' } }
+                    title: { text: 'S&P 500 Return (inv)', font: { size: 12, color: '#a855f7' } }
                 },
                 shapes: shapes,
                 hovermode: 'x unified',
