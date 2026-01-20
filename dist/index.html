@@ -15,10 +15,10 @@
             background: #0f172a;
             color: #e2e8f0;
             min-height: 100vh;
-            padding: 1.5rem;
+            padding: 1rem 2rem;
         }
         
-        .container { max-width: 100%; margin: 0 auto; padding: 0 1rem; }
+        .container { width: 100%; max-width: none; margin: 0; padding: 0; }
         
         .header {
             display: flex;
@@ -68,8 +68,8 @@
         }
         .tab:hover { color: #e2e8f0; }
         .tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: block; width: 100%; }
         
         /* Regime Header */
         .regime-header {
@@ -99,9 +99,16 @@
         .alert-elevated { background: #f9731622; border: 1px solid #f97316; color: #fdba74; }
         .alert-level { font-weight: 600; }
         
-        /* Chart */
-        .chart-container { margin-bottom: 1rem; width: 100%; box-sizing: border-box; }
-        #chart { height: 450px; width: 100%; min-width: 100%; }
+        /* Chart - force full width */
+        .chart-container { 
+            margin-bottom: 1rem; 
+            width: 100%; 
+            box-sizing: border-box;
+        }
+        #chart { 
+            height: 450px; 
+            width: 100% !important;
+        }
         
         /* Event Legend */
         .event-legend {
@@ -811,12 +818,21 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 tab.classList.add('active');
                 document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                // Resize chart when switching to dashboard tab
+                if (tab.dataset.tab === 'dashboard') {
+                    setTimeout(() => Plotly.Plots.resize('chart'), 100);
+                }
             });
         });
         
         // Period selector
         document.getElementById('periodSelect').addEventListener('change', (e) => {
             renderChart(parseInt(e.target.value));
+        });
+        
+        // Resize chart on window resize
+        window.addEventListener('resize', () => {
+            Plotly.Plots.resize('chart');
         });
         
         function renderChart(days) {
@@ -880,6 +896,7 @@
             const spPadding = Math.max(5, (maxSP - minSP) * 0.1);
             
             const layout = {
+                autosize: true,
                 paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
                 margin: { t: 30, r: 80, b: 50, l: 60 },
                 xaxis: { showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: { size: 11 }, tickformat: '%b %d' },
@@ -902,7 +919,14 @@
                 legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: 1.08, font: { size: 11, color: '#e2e8f0' }, bgcolor: 'rgba(0,0,0,0)' },
             };
             
-            Plotly.newPlot('chart', [traceStress, traceSP500], layout, { displayModeBar: false, responsive: true });
+            const config = { 
+                displayModeBar: false, 
+                responsive: true,
+            };
+            Plotly.newPlot('chart', [traceStress, traceSP500], layout, config);
+            
+            // Force resize after render
+            window.dispatchEvent(new Event('resize'));
             
             // Update event legend
             const legendEl = document.getElementById('eventLegend');
@@ -916,8 +940,12 @@
             }
         }
         
-        // Initialize chart
-        renderChart(365);
+        // Initialize chart after DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            renderChart(365);
+            // Force resize after initial render
+            setTimeout(() => Plotly.Plots.resize('chart'), 200);
+        });
     </script>
     
     <script>
