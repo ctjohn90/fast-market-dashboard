@@ -1,0 +1,157 @@
+# Fast Market Dashboard - Cursor Rules
+
+## Project Context
+Personal experiment building a market stress dashboard. Inspired by asset management risk team workflows. The dashboard monitors market conditions and produces composite risk indicators during periods of elevated volatility.
+
+**Critical: Always use real data. Never use placeholder, mock, or synthetic data.**
+
+## Code Style
+
+### General Principles
+- Write minimal, focused code. Every line should earn its place.
+- No over-engineering. Solve the current problem, not hypothetical future ones.
+- No emojis in code, comments, logs, or UI.
+- Prefer standard library solutions before reaching for third-party packages.
+- Flat is better than nested. Avoid deep abstractions.
+
+### Python Standards
+- Python 3.11+ target
+- Use type hints for function signatures
+- Prefer dataclasses over dicts for structured data
+- Use pathlib for file paths
+- Follow PEP 8 with 88-character line limit (black default)
+- Use f-strings for formatting
+
+### File Organization
+```
+fast_market_dashboard/
+    config/          # Configuration files, thresholds
+    data/            # Data fetching and caching
+    models/          # Data models (dataclasses)
+    indicators/      # Risk indicator calculations
+    ui/              # Dashboard interface
+    utils/           # Shared utilities (keep minimal)
+    main.py          # Entry point
+```
+
+### Dependencies
+Preferred packages:
+- pandas: Data manipulation
+- polars: High-performance alternative when speed matters
+- httpx: HTTP client (async support)
+- pydantic: Config validation only
+- plotly/dash or streamlit: Dashboard UI
+- sqlite3: Local caching (stdlib)
+
+Avoid unless necessary:
+- Heavy ORM frameworks
+- Complex async patterns for simple tasks
+- Wrapper libraries when direct API calls suffice
+
+### Error Handling
+- Fail fast and loud during development
+- Log errors with context, not stack traces in production
+- No silent failures for data fetches
+
+### Testing
+- Test calculations and data transformations
+- Skip mocking unless testing external integrations
+- Prefer integration tests over unit tests for data pipelines
+
+## Data Sources
+
+### Primary: FRED API (Federal Reserve Economic Data)
+Free, reliable, no aggressive rate limits. Get API key at: https://fred.stlouisfed.org/docs/api/api_key.html
+
+### Required FRED Series
+```
+VIXCLS          - VIX Close (fear gauge)
+DGS2            - 2-Year Treasury yield
+DGS10           - 10-Year Treasury yield
+T10Y2Y          - 10Y-2Y Spread (curve shape)
+BAMLH0A0HYM2    - ICE BofA High Yield Spread
+BAMLC0A0CM      - ICE BofA IG Corporate Spread
+DTWEXBGS        - Trade Weighted USD Index
+SP500           - S&P 500 Index
+```
+
+### Supplementary: Yahoo Finance (via yfinance)
+Use only for equity data not available in FRED. Unofficial API, may break.
+
+```python
+# Example: Get S&P 500 for drawdown calculation
+import yfinance as yf
+spy = yf.download("^GSPC", period="2y")
+```
+
+### Data Refresh Strategy
+- Fetch once daily (FRED data is EOD anyway)
+- Cache in local SQLite database
+- Only fetch deltas (new dates since last fetch)
+- Store raw values; compute indicators on read
+
+## Analytics Pipeline
+
+### Layer 1: Raw Data
+Fetch daily data from FRED API. Cache locally in SQLite to avoid redundant requests.
+
+### Layer 2: Individual Indicators
+Transform each series into a normalized 0-100 score using percentile rank over trailing 252 trading days (1 year).
+
+| Series | Indicator Name | Interpretation |
+|--------|----------------|----------------|
+| VIXCLS | Volatility | Higher = more fear |
+| BAMLH0A0HYM2 | HY Credit Stress | Higher = risk-off |
+| BAMLC0A0CM | IG Credit Stress | Higher = risk-off |
+| T10Y2Y | Curve Shape | Inverted = stress |
+| DGS10 | Rate Level | Context for moves |
+| DTWEXBGS | USD Strength | Flight to safety |
+| SP500 | Equity Drawdown | % from 52-week high |
+
+### Layer 3: Composite Score
+Weighted average of Layer 2 indicators:
+
+```
+Composite = (
+    0.25 * vix_percentile +
+    0.25 * hy_spread_percentile +
+    0.15 * ig_spread_percentile +
+    0.15 * equity_drawdown_score +
+    0.10 * curve_inversion_score +
+    0.10 * usd_flight_score
+)
+```
+
+Output: 0-100 scale
+- 0-30: Calm
+- 30-50: Normal  
+- 50-70: Elevated
+- 70-100: Fast market / high stress
+
+### Layer 4: Signals
+Generate discrete alerts when:
+- Composite crosses threshold (e.g., > 70)
+- Any single indicator spikes (> 90th percentile)
+- Rate of change is extreme (composite up 20+ points in 5 days)
+
+## Dashboard Requirements
+
+### Key Metrics to Display
+- Composite stress score (large, prominent)
+- Component breakdown (what is driving the score)
+- Sparklines for 30-day history of each component
+- Current vs. historical percentile context
+- Date/time of last data refresh
+
+### UI Guidelines
+- Dark theme (easier on eyes, trading floor standard)
+- No decorative elements
+- Data density over whitespace
+- Red/amber/green only for actionable thresholds
+- Single page, no navigation needed
+
+## Git Practices
+- Commit messages: imperative mood, under 50 chars
+- No commits with broken code
+- Keep secrets in environment variables or .env (gitignored)
+
