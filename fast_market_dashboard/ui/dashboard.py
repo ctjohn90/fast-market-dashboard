@@ -13,6 +13,7 @@ from datetime import datetime
 
 from fast_market_dashboard.indicators import IndicatorCalculator
 from fast_market_dashboard.indicators.calculator import CompositeResult, WEIGHTS, INDICATOR_INFO
+from fast_market_dashboard.indicators.forecast import LargeMoveForecaster
 from fast_market_dashboard.data.cache import DataCache
 from fast_market_dashboard.config import Settings
 
@@ -138,7 +139,7 @@ def render_indicator_panel(result: CompositeResult) -> None:
         
         alert = "!" if pct >= 80 else ""
         
-        st.markdown(
+            st.markdown(
             f"""<div style="margin-bottom: 0.75rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
                     <span style="color: #e2e8f0; font-size: 0.85rem;">
@@ -194,7 +195,7 @@ def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache
     ), secondary_y=False)
     
     # Current point marker
-    fig.add_trace(go.Scatter(
+                fig.add_trace(go.Scatter(
         x=[history.index[-1]], y=[history["composite"].iloc[-1]],
         mode="markers", marker=dict(color=get_regime(history["composite"].iloc[-1])["color"], size=10),
         hoverinfo="skip", showlegend=False,
@@ -222,7 +223,7 @@ def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache
                         trace_name = "S&P Cumulative"
                         hover_template = "S&P: %{y:+.1f}%<extra></extra>"
                     
-                    fig.add_trace(go.Scatter(
+                fig.add_trace(go.Scatter(
                         x=sp_returns.index, y=sp_returns,
                         mode="lines", line=dict(color="#a855f7", width=1.5, dash="dot"),
                         name=trace_name,
@@ -254,8 +255,8 @@ def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache
                 x=event_ts, line_dash="dash", line_color=color, line_width=1.5, opacity=0.7,
             )
             visible_events.append((event_date, label, color))
-    
-    fig.update_layout(
+                
+                fig.update_layout(
         height=320, margin=dict(l=0, r=60, t=30, b=0),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         showlegend=True,
@@ -325,7 +326,7 @@ def render_raw_values(result: CompositeResult) -> None:
             formatted = f"{val:.3f}"
         elif "/" in indicator.name or "Rotation" in indicator.name:
             formatted = f"{val:.3f}"
-        else:
+            else:
             formatted = f"{val:.2f}"
         
         st.markdown(
@@ -948,6 +949,306 @@ If Hybrid exceeds <strong style="color: #e2e8f0;">85</strong>, treat as confirme
 
 
 # =============================================================================
+# TAB 5: FORECAST
+# =============================================================================
+
+def render_forecast_tab() -> None:
+    """Render the neural network forecast tab."""
+    st.markdown("## Large Move Forecaster")
+    
+    st.markdown("""
+    Neural network model to predict S&P 500 moves greater than 3% (either direction) 
+    using t-1 (previous day) indicator values. This replicates the approach used by 
+    institutional risk teams for fast market detection.
+    """)
+    
+    # Load and train model
+    with st.spinner("Training forecast model..."):
+        forecaster = LargeMoveForecaster()
+        train_metrics = forecaster.train()
+    
+    if "error" in train_metrics:
+        st.error(f"Error training model: {train_metrics['error']}")
+        return
+    
+    # Current forecast
+    st.markdown("### Current Forecast")
+    
+    forecast = forecaster.predict()
+    
+    if forecast:
+        if forecast.probability >= 0.5:
+            prob_color = "#ef4444"  # Red for high probability
+            alert_status = "HIGH ALERT"
+        elif forecast.probability >= 0.25:
+            prob_color = "#f97316"  # Orange
+            alert_status = "ELEVATED"
+        else:
+            prob_color = "#10b981"  # Green
+            alert_status = "NORMAL"
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown(f"""
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; text-align: center;">
+                <div style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Probability of Large Move
+                </div>
+                <div style="font-size: 2.5rem; font-weight: 700; color: {prob_color}; font-family: 'SF Mono', monospace;">
+                    {forecast.probability:.1%}
+                </div>
+                <div style="color: {prob_color}; font-size: 0.85rem; font-weight: 600;">
+                    {alert_status}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            pred_text = "Large Move Expected" if forecast.prediction else "Normal Day Expected"
+            pred_color = "#ef4444" if forecast.prediction else "#10b981"
+            st.markdown(f"""
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; text-align: center;">
+                <div style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Model Prediction
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: {pred_color}; margin-top: 0.75rem;">
+                    {pred_text}
+                </div>
+                <div style="color: #64748b; font-size: 0.75rem; margin-top: 0.5rem;">
+                    Threshold: 25%
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            if forecast.actual is not None:
+                actual_text = f"Large Move ({forecast.actual_return:+.2f}%)" if forecast.actual else f"Normal ({forecast.actual_return:+.2f}%)"
+                actual_color = "#ef4444" if forecast.actual else "#10b981"
+            else:
+                actual_text = "Pending"
+                actual_color = "#64748b"
+            st.markdown(f"""
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; text-align: center;">
+                <div style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Actual Outcome
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: {actual_color}; margin-top: 0.75rem;">
+                    {actual_text}
+                </div>
+                <div style="color: #64748b; font-size: 0.75rem; margin-top: 0.5rem;">
+                    Date: {forecast.date}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Training metrics
+    st.markdown("### Model Performance (Hold-Out Test Set)")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Accuracy", f"{train_metrics['accuracy']:.1%}")
+    with col2:
+        st.metric("Precision", f"{train_metrics['precision']:.1%}")
+    with col3:
+        st.metric("Recall", f"{train_metrics['recall']:.1%}")
+    with col4:
+        st.metric("AUC-ROC", f"{train_metrics['auc_roc']:.3f}")
+    
+    st.markdown(f"""
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+        <div style="color: #94a3b8; font-size: 0.85rem;">
+            <strong style="color: #e2e8f0;">Training Data:</strong> {train_metrics['train_samples']} samples 
+            ({train_metrics['large_moves_train']} large moves = {train_metrics['large_moves_train']/train_metrics['train_samples']:.1%})<br>
+            <strong style="color: #e2e8f0;">Test Data:</strong> {train_metrics['test_samples']} samples 
+            ({train_metrics['large_moves_test']} large moves = {train_metrics['large_moves_test']/train_metrics['test_samples']:.1%})
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Walk-forward backtest
+    st.markdown("### Walk-Forward Backtest (2020-Present)")
+    
+    with st.spinner("Running walk-forward backtest..."):
+        backtest = forecaster.backtest(start_year=2020)
+    
+    if backtest:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem;">
+                <h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">Detection Performance</h4>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+                <table style="width: 100%; border-collapse: collapse; color: #e2e8f0; font-size: 0.85rem;">
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 0.5rem 0;">Recall (Sensitivity)</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.recall:.1%}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 0.5rem 0;">Large Moves Caught</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.large_moves_caught} / {backtest.large_moves_total}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 0.5rem 0;">False Alarms</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.false_alarms}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0;">Precision</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.precision:.1%}</td>
+                    </tr>
+                </table>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem;">
+                <h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">Confusion Matrix</h4>
+                <table style="width: 100%; text-align: center; color: #e2e8f0; font-size: 0.85rem;">
+                    <tr>
+                        <td></td>
+                        <td style="color: #94a3b8; padding: 0.25rem;">Pred: Normal</td>
+                        <td style="color: #94a3b8; padding: 0.25rem;">Pred: Large</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #94a3b8; text-align: left;">Actual: Normal</td>
+                        <td style="background: #10b98133; padding: 0.5rem; font-family: monospace;">{backtest.true_negatives}</td>
+                        <td style="background: #f9731633; padding: 0.5rem; font-family: monospace;">{backtest.false_positives}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #94a3b8; text-align: left;">Actual: Large</td>
+                        <td style="background: #ef444433; padding: 0.5rem; font-family: monospace;">{backtest.false_negatives}</td>
+                        <td style="background: #10b98133; padding: 0.5rem; font-family: monospace;">{backtest.true_positives}</td>
+                    </tr>
+                </table>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Feature importance
+    st.markdown("### Feature Importance (Approximate)")
+    
+    importance = forecaster.get_feature_importance()
+    if importance:
+        sorted_imp = sorted(importance.items(), key=lambda x: -x[1])[:10]
+        
+        for name, imp in sorted_imp:
+            st.markdown(f"""
+            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                <div style="width: 180px; color: #94a3b8; font-size: 0.8rem;">{name}</div>
+                <div style="flex: 1; background: #334155; border-radius: 4px; height: 20px; margin-left: 0.5rem;">
+                    <div style="width: {imp*100*5}%; background: #3b82f6; height: 100%; border-radius: 4px;"></div>
+                </div>
+                <div style="width: 50px; text-align: right; color: #e2e8f0; font-size: 0.8rem; font-family: monospace; margin-left: 0.5rem;">
+                    {imp:.1%}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Methodology
+    st.markdown("### Methodology")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem;">
+            <h4 style="color: #3b82f6; margin: 0 0 0.75rem 0;">Model Architecture</h4>
+            <ul style="color: #94a3b8; font-size: 0.85rem; margin: 0; padding-left: 1.25rem;">
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Type:</strong> Multi-Layer Perceptron (MLP) Neural Network
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Layers:</strong> 64 - 32 - 16 neurons (3 hidden layers)
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Activation:</strong> ReLU with adaptive learning rate
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Regularization:</strong> L2 (alpha=0.01) + early stopping
+                </li>
+                <li>
+                    <strong style="color: #e2e8f0;">Class Balancing:</strong> Oversampling (target 15% positive)
+                </li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem;">
+            <h4 style="color: #3b82f6; margin: 0 0 0.75rem 0;">Key Design Choices</h4>
+            <ul style="color: #94a3b8; font-size: 0.85rem; margin: 0; padding-left: 1.25rem;">
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Target:</strong> Binary (|return| > 3%)
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Features:</strong> t-1 lagged indicators + rolling stats
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Prediction Threshold:</strong> 0.25 (lowered from 0.5 for rare events)
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong style="color: #e2e8f0;">Validation:</strong> Walk-forward (no lookahead bias)
+                </li>
+                <li>
+                    <strong style="color: #e2e8f0;">Priority:</strong> High recall (catch moves) over precision
+                </li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Interpretation guidance
+    st.markdown("### Interpretation Guide")
+    
+    st.markdown("""
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem;">
+        <table style="width: 100%; border-collapse: collapse; color: #e2e8f0; font-size: 0.85rem;">
+            <tr style="border-bottom: 1px solid #334155;">
+                <th style="text-align: left; padding: 0.5rem 0; color: #94a3b8;">Probability</th>
+                <th style="text-align: left; padding: 0.5rem 0; color: #94a3b8;">Signal</th>
+                <th style="text-align: left; padding: 0.5rem 0; color: #94a3b8;">Suggested Action</th>
+            </tr>
+            <tr style="border-bottom: 1px solid #334155;">
+                <td style="padding: 0.5rem 0; color: #10b981;">0-15%</td>
+                <td>Normal conditions</td>
+                <td>Standard risk protocols</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #334155;">
+                <td style="padding: 0.5rem 0; color: #f59e0b;">15-30%</td>
+                <td>Slightly elevated</td>
+                <td>Monitor closely, review hedges</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #334155;">
+                <td style="padding: 0.5rem 0; color: #f97316;">30-50%</td>
+                <td>Elevated risk</td>
+                <td>Consider reducing exposure, tighten stops</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 0; color: #ef4444;">50%+</td>
+                <td>High probability of large move</td>
+                <td>Active risk management, ensure liquidity</td>
+            </tr>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background: #0f172a; border: 1px solid #f59e0b44; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+        <div style="color: #f59e0b; font-weight: 600; margin-bottom: 0.5rem;">Important Notes</div>
+        <ul style="color: #94a3b8; font-size: 0.85rem; margin: 0; padding-left: 1.25rem;">
+            <li style="margin-bottom: 0.25rem;">Large moves (>3%) are rare (~1% of days), so precision is inherently low</li>
+            <li style="margin-bottom: 0.25rem;">The model is tuned for high recall (catching moves) at the cost of false alarms</li>
+            <li>Use in conjunction with the composite stress score, not as a standalone signal</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# =============================================================================
 # MAIN APP
 # =============================================================================
 
@@ -1044,7 +1345,7 @@ def main() -> None:
         return
     
     # Tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["Dashboard", "Indicators", "Backtest", "Models"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Dashboard", "Indicators", "Backtest", "Models", "Forecast"])
     
     with tab1:
         render_dashboard_tab(calc, result, history, history_days, return_type)
@@ -1057,6 +1358,9 @@ def main() -> None:
     
     with tab4:
         render_models_tab(calc, history_days)
+    
+    with tab5:
+        render_forecast_tab()
 
 
 if __name__ == "__main__":

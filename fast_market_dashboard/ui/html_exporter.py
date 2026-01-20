@@ -11,6 +11,7 @@ import pandas as pd
 from fast_market_dashboard.config import Settings
 from fast_market_dashboard.data.cache import DataCache
 from fast_market_dashboard.indicators.calculator import IndicatorCalculator, WEIGHTS, INDICATOR_INFO
+from fast_market_dashboard.indicators.forecast import LargeMoveForecaster
 
 
 # Market events for annotations
@@ -278,6 +279,205 @@ def build_models_tab() -> str:
     '''
 
 
+def build_forecast_tab(forecast_data: dict) -> str:
+    """Build the Forecast (neural network) tab HTML."""
+    # Extract data from forecast_data
+    current = forecast_data.get("current", {})
+    metrics = forecast_data.get("metrics", {})
+    backtest = forecast_data.get("backtest", {})
+    importance = forecast_data.get("importance", {})
+    
+    # Current forecast display
+    prob = current.get("probability", 0)
+    prediction = current.get("prediction", 0)
+    actual = current.get("actual")
+    actual_return = current.get("actual_return")
+    forecast_date = current.get("date", "N/A")
+    
+    if prob >= 0.5:
+        prob_color = "#ef4444"
+        alert_status = "HIGH ALERT"
+    elif prob >= 0.25:
+        prob_color = "#f97316"
+        alert_status = "ELEVATED"
+    else:
+        prob_color = "#10b981"
+        alert_status = "NORMAL"
+    
+    pred_text = "Large Move Expected" if prediction else "Normal Day Expected"
+    pred_color = "#ef4444" if prediction else "#10b981"
+    
+    if actual is not None:
+        actual_text = f"Large Move ({actual_return:+.2f}%)" if actual else f"Normal ({actual_return:+.2f}%)"
+        actual_color = "#ef4444" if actual else "#10b981"
+    else:
+        actual_text = "Pending"
+        actual_color = "#6b7280"
+    
+    # Feature importance bars
+    importance_html = ""
+    sorted_imp = sorted(importance.items(), key=lambda x: -x[1])[:10] if importance else []
+    for name, imp in sorted_imp:
+        importance_html += f'''
+            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                <div style="width: 180px; color: #94a3b8; font-size: 0.8rem;">{name}</div>
+                <div style="flex: 1; background: #334155; border-radius: 4px; height: 18px; margin: 0 0.5rem;">
+                    <div style="width: {imp*100*5}%; background: #3b82f6; height: 100%; border-radius: 4px;"></div>
+                </div>
+                <div style="width: 50px; text-align: right; color: #e2e8f0; font-size: 0.8rem; font-family: monospace;">
+                    {imp:.1%}
+                </div>
+            </div>
+        '''
+    
+    return f'''
+        <h2 class="tab-heading">Large Move Forecaster</h2>
+        <p class="tab-intro">Neural network model to predict S&amp;P 500 moves greater than 3% (either direction) using t-1 (previous day) indicator values.</p>
+        
+        <h3 class="section-title">Current Forecast</h3>
+        <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-box">
+                <div class="metric-label">Probability of Large Move</div>
+                <div class="metric-value" style="font-size: 2rem; color: {prob_color};">{prob:.1%}</div>
+                <div class="metric-sublabel" style="color: {prob_color}; font-weight: 600;">{alert_status}</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Model Prediction</div>
+                <div class="metric-value" style="font-size: 1rem; color: {pred_color};">{pred_text}</div>
+                <div class="metric-sublabel">Threshold: 25%</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Actual Outcome</div>
+                <div class="metric-value" style="font-size: 1rem; color: {actual_color};">{actual_text}</div>
+                <div class="metric-sublabel">Date: {forecast_date}</div>
+            </div>
+        </div>
+        
+        <h3 class="section-title">Model Performance (Hold-Out Test Set)</h3>
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-value">{metrics.get("accuracy", 0):.1%}</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Precision</div>
+                <div class="metric-value">{metrics.get("precision", 0):.1%}</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Recall</div>
+                <div class="metric-value">{metrics.get("recall", 0):.1%}</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">AUC-ROC</div>
+                <div class="metric-value">{metrics.get("auc_roc", 0):.3f}</div>
+            </div>
+        </div>
+        
+        <div class="section-box">
+            <div style="color: #94a3b8; font-size: 0.85rem;">
+                <strong style="color: #e2e8f0;">Training Data:</strong> {metrics.get("train_samples", 0)} samples 
+                ({metrics.get("large_moves_train", 0)} large moves)<br>
+                <strong style="color: #e2e8f0;">Test Data:</strong> {metrics.get("test_samples", 0)} samples 
+                ({metrics.get("large_moves_test", 0)} large moves)
+            </div>
+        </div>
+        
+        <h3 class="section-title">Walk-Forward Backtest (2020-Present)</h3>
+        <div class="metrics-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="section-box">
+                <h4 style="color: #e2e8f0; margin-bottom: 1rem;">Detection Performance</h4>
+                <table style="width: 100%; border-collapse: collapse; color: #e2e8f0; font-size: 0.85rem;">
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 0.5rem 0;">Recall (Sensitivity)</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.get("recall", 0):.1%}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 0.5rem 0;">Large Moves Caught</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.get("large_moves_caught", 0)} / {backtest.get("large_moves_total", 0)}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 0.5rem 0;">False Alarms</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.get("false_alarms", 0)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0;">Precision</td>
+                        <td style="text-align: right; font-family: monospace;">{backtest.get("precision", 0):.1%}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="section-box">
+                <h4 style="color: #e2e8f0; margin-bottom: 1rem;">Confusion Matrix</h4>
+                <table style="width: 100%; text-align: center; color: #e2e8f0; font-size: 0.85rem;">
+                    <tr>
+                        <td></td>
+                        <td style="color: #94a3b8; padding: 0.25rem;">Pred: Normal</td>
+                        <td style="color: #94a3b8; padding: 0.25rem;">Pred: Large</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #94a3b8; text-align: left;">Actual: Normal</td>
+                        <td style="background: #10b98133; padding: 0.5rem; font-family: monospace;">{backtest.get("true_negatives", 0)}</td>
+                        <td style="background: #f9731633; padding: 0.5rem; font-family: monospace;">{backtest.get("false_positives", 0)}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #94a3b8; text-align: left;">Actual: Large</td>
+                        <td style="background: #ef444433; padding: 0.5rem; font-family: monospace;">{backtest.get("false_negatives", 0)}</td>
+                        <td style="background: #10b98133; padding: 0.5rem; font-family: monospace;">{backtest.get("true_positives", 0)}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <h3 class="section-title">Feature Importance (Approximate)</h3>
+        <div class="section-box">
+            {importance_html if importance_html else "<p style='color: #94a3b8;'>No importance data available</p>"}
+        </div>
+        
+        <h3 class="section-title">Methodology</h3>
+        <div class="metrics-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="section-box">
+                <h4 style="color: #3b82f6; margin-bottom: 0.75rem;">Model Architecture</h4>
+                <ul style="color: #94a3b8; font-size: 0.85rem; padding-left: 1.25rem;">
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Type:</strong> Multi-Layer Perceptron (MLP) Neural Network</li>
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Layers:</strong> 64 - 32 - 16 neurons (3 hidden layers)</li>
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Activation:</strong> ReLU with adaptive learning rate</li>
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Regularization:</strong> L2 (alpha=0.01) + early stopping</li>
+                    <li><strong style="color: #e2e8f0;">Class Balancing:</strong> Oversampling (target 15% positive)</li>
+                </ul>
+            </div>
+            <div class="section-box">
+                <h4 style="color: #3b82f6; margin-bottom: 0.75rem;">Key Design Choices</h4>
+                <ul style="color: #94a3b8; font-size: 0.85rem; padding-left: 1.25rem;">
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Target:</strong> Binary (|return| &gt; 3%)</li>
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Features:</strong> t-1 lagged indicators + rolling stats</li>
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Prediction Threshold:</strong> 0.25 (lowered from 0.5 for rare events)</li>
+                    <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Validation:</strong> Walk-forward (no lookahead bias)</li>
+                    <li><strong style="color: #e2e8f0;">Priority:</strong> High recall (catch moves) over precision</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h3 class="section-title">Interpretation Guide</h3>
+        <table class="rankings-table">
+            <thead><tr><th>Probability</th><th>Signal</th><th>Suggested Action</th></tr></thead>
+            <tbody>
+                <tr><td style="color: #10b981;">0-15%</td><td>Normal conditions</td><td>Standard risk protocols</td></tr>
+                <tr><td style="color: #f59e0b;">15-30%</td><td>Slightly elevated</td><td>Monitor closely, review hedges</td></tr>
+                <tr><td style="color: #f97316;">30-50%</td><td>Elevated risk</td><td>Consider reducing exposure, tighten stops</td></tr>
+                <tr><td style="color: #ef4444;">50%+</td><td>High probability of large move</td><td>Active risk management, ensure liquidity</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="section-box" style="background: #0f172a; border-color: #f59e0b44; margin-top: 1rem;">
+            <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">Important Notes</h4>
+            <ul style="color: #94a3b8; font-size: 0.85rem; padding-left: 1.25rem;">
+                <li style="margin-bottom: 0.25rem;">Large moves (&gt;3%) are rare (~1% of days), so precision is inherently low</li>
+                <li style="margin-bottom: 0.25rem;">The model is tuned for high recall (catching moves) at the cost of false alarms</li>
+                <li>Use in conjunction with the composite stress score, not as a standalone signal</li>
+            </ul>
+        </div>
+    '''
+
+
 def export_html(output_path: Path | str | None = None, password: str | None = None) -> Path:
     """
     Generate self-contained HTML dashboard with tabs.
@@ -409,6 +609,53 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     indicators_tab = build_indicators_tab(result)
     backtest_tab = build_backtest_tab()
     models_tab = build_models_tab()
+    
+    # Train forecast model and get data
+    forecast_data = {}
+    try:
+        forecaster = LargeMoveForecaster(settings)
+        train_metrics = forecaster.train()
+        
+        if "error" not in train_metrics:
+            # Get current forecast
+            current_forecast = forecaster.predict()
+            if current_forecast:
+                forecast_data["current"] = {
+                    "probability": current_forecast.probability,
+                    "prediction": current_forecast.prediction,
+                    "actual": current_forecast.actual,
+                    "actual_return": current_forecast.actual_return,
+                    "date": str(current_forecast.date),
+                }
+            
+            # Get training metrics
+            forecast_data["metrics"] = train_metrics
+            
+            # Get feature importance
+            forecast_data["importance"] = forecaster.get_feature_importance()
+            
+            # Get backtest results
+            backtest_result = forecaster.backtest(start_year=2020)
+            if backtest_result:
+                forecast_data["backtest"] = {
+                    "accuracy": backtest_result.accuracy,
+                    "precision": backtest_result.precision,
+                    "recall": backtest_result.recall,
+                    "f1_score": backtest_result.f1_score,
+                    "auc_roc": backtest_result.auc_roc,
+                    "total_predictions": backtest_result.total_predictions,
+                    "large_moves_caught": backtest_result.large_moves_caught,
+                    "large_moves_total": backtest_result.large_moves_total,
+                    "false_alarms": backtest_result.false_alarms,
+                    "true_positives": backtest_result.true_positives,
+                    "true_negatives": backtest_result.true_negatives,
+                    "false_positives": backtest_result.false_positives,
+                    "false_negatives": backtest_result.false_negatives,
+                }
+    except Exception as e:
+        print(f"Warning: Could not train forecast model: {e}")
+    
+    forecast_tab = build_forecast_tab(forecast_data)
     
     # Market events as JSON for JavaScript
     market_events_json = json.dumps(MARKET_EVENTS)
@@ -655,6 +902,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             <div class="tab" data-tab="indicators">Indicators</div>
             <div class="tab" data-tab="backtest">Backtest</div>
             <div class="tab" data-tab="models">Models</div>
+            <div class="tab" data-tab="forecast">Forecast</div>
         </div>
         
         <!-- Dashboard Tab -->
@@ -709,6 +957,11 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         <!-- Models Tab -->
         <div class="tab-content" id="tab-models">
             {models_tab}
+        </div>
+        
+        <!-- Forecast Tab -->
+        <div class="tab-content" id="tab-forecast">
+            {forecast_tab}
         </div>
     </div>
     </div>
