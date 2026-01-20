@@ -940,11 +940,21 @@
             }
         }
         
-        // Initialize chart after DOM is ready
+        // Initialize chart - defer if dashboard is hidden (password protected)
+        let chartInitialized = false;
+        function initChart() {
+            if (chartInitialized) return;
+            const dashboard = document.getElementById('dashboardContent');
+            if (dashboard && dashboard.classList.contains('visible')) {
+                renderChart(365);
+                chartInitialized = true;
+                setTimeout(() => Plotly.Plots.resize('chart'), 100);
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
-            renderChart(365);
-            // Force resize after initial render
-            setTimeout(() => Plotly.Plots.resize('chart'), 200);
+            // Try to init chart if dashboard is already visible (no password)
+            initChart();
         });
     </script>
     
@@ -964,6 +974,12 @@
         function showDashboard() {
             document.getElementById("loginOverlay").classList.add("hidden");
             document.getElementById("dashboardContent").classList.add("visible");
+            // Initialize chart after dashboard becomes visible
+            setTimeout(() => {
+                if (typeof initChart === 'function') {
+                    initChart();
+                }
+            }, 50);
         }
         async function handleLogin() {
             const password = document.getElementById("passwordInput").value;
