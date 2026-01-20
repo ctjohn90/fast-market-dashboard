@@ -317,7 +317,7 @@
                     
             <div class="signal-row">
                 <div class="signal-header">
-                    <span class="signal-name">! Safe Haven (GLD/SPY) <span class="signal-weight">5% wt</span></span>
+                    <span class="signal-name">! Safe Haven (GLD/SPY) <span class="signal-weight">6% wt</span></span>
                     <span class="signal-value" style="color: #C86C61">99</span>
                 </div>
                 <div class="signal-bar-bg">
@@ -367,7 +367,7 @@
         
             <div class="signal-row">
                 <div class="signal-header">
-                    <span class="signal-name"> Defensive Rotation <span class="signal-weight">8% wt</span></span>
+                    <span class="signal-name"> Defensive Rotation <span class="signal-weight">10% wt</span></span>
                     <span class="signal-value" style="color: #9DAE88">22</span>
                 </div>
                 <div class="signal-bar-bg">
@@ -377,17 +377,7 @@
         
             <div class="signal-row">
                 <div class="signal-header">
-                    <span class="signal-name"> BBB Credit Spread <span class="signal-weight">10% wt</span></span>
-                    <span class="signal-value" style="color: #9DAE88">8</span>
-                </div>
-                <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 7.97%; background: #7A9C49;"></div>
-                </div>
-            </div>
-        
-            <div class="signal-row">
-                <div class="signal-header">
-                    <span class="signal-name"> HY Credit Spread <span class="signal-weight">18% wt</span></span>
+                    <span class="signal-name"> HY Credit Spread <span class="signal-weight">20% wt</span></span>
                     <span class="signal-value" style="color: #9DAE88">7</span>
                 </div>
                 <div class="signal-bar-bg">
@@ -397,7 +387,7 @@
         
             <div class="signal-row">
                 <div class="signal-header">
-                    <span class="signal-name"> IG Credit Spread <span class="signal-weight">12% wt</span></span>
+                    <span class="signal-name"> IG Credit Spread <span class="signal-weight">15% wt</span></span>
                     <span class="signal-value" style="color: #9DAE88">6</span>
                 </div>
                 <div class="signal-bar-bg">
@@ -407,7 +397,7 @@
         
             <div class="signal-row">
                 <div class="signal-header">
-                    <span class="signal-name"> S&P 500 Drawdown <span class="signal-weight">8% wt</span></span>
+                    <span class="signal-name"> S&P 500 Drawdown <span class="signal-weight">10% wt</span></span>
                     <span class="signal-value" style="color: #9DAE88">1</span>
                 </div>
                 <div class="signal-bar-bg">
@@ -432,11 +422,6 @@
             <div class="level-row">
                 <span class="level-name">VIX</span>
                 <span class="level-value">15.8</span>
-            </div>
-        
-            <div class="level-row">
-                <span class="level-name">BBB Credit Spread</span>
-                <span class="level-value">0.97%</span>
             </div>
         
             <div class="level-row">
@@ -489,7 +474,7 @@
                         <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 7
                         </div>
-                        <div class="indicator-weight">Weight: 18%</div>
+                        <div class="indicator-weight">Weight: 20%</div>
                     </div>
                 </div>
                 <p class="indicator-description">The spread between high yield (junk) bonds and treasuries. Widens sharply during stress as investors demand more compensation for risk.</p>
@@ -515,10 +500,10 @@
                         <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 6
                         </div>
-                        <div class="indicator-weight">Weight: 12%</div>
+                        <div class="indicator-weight">Weight: 15%</div>
                     </div>
                 </div>
-                <p class="indicator-description">Option-adjusted spread for investment grade corporate bonds vs treasuries. Broader measure of corporate credit stress than BBB alone.</p>
+                <p class="indicator-description">Option-adjusted spread for investment grade corporate bonds vs treasuries. Covers full IG spectrum (BBB removed due to multicollinearity - VIF > 100).</p>
                 <div class="indicator-details">
                     <div class="indicator-detail-box">
                         <div class="indicator-detail-label">Interpretation</div>
@@ -527,32 +512,6 @@
                     <div class="indicator-detail-box">
                         <div class="indicator-detail-label">Backtest Performance</div>
                         <div class="indicator-detail-value">Signal Ratio: 2.15x | Detection: 100% (7/7 events)</div>
-                    </div>
-                </div>
-            </div>
-        
-            <div class="indicator-card">
-                <div class="indicator-card-header">
-                    <div>
-                        <h3 class="indicator-card-title">BBB Credit Spread</h3>
-                        <div class="indicator-card-source">FRED (BAMLC0A4CBBB)</div>
-                    </div>
-                    <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
-                            Low: 8
-                        </div>
-                        <div class="indicator-weight">Weight: 10%</div>
-                    </div>
-                </div>
-                <p class="indicator-description">Spread for BBB-rated corporate bonds (lowest investment grade). Sensitive to downgrade fears.</p>
-                <div class="indicator-details">
-                    <div class="indicator-detail-box">
-                        <div class="indicator-detail-label">Interpretation</div>
-                        <div class="indicator-detail-value">Higher = more stress. BBB is the largest segment of corporate debt.</div>
-                    </div>
-                    <div class="indicator-detail-box">
-                        <div class="indicator-detail-label">Backtest Performance</div>
-                        <div class="indicator-detail-value">Signal Ratio: 2.18x | Detection: 100% (7/7 events)</div>
                     </div>
                 </div>
             </div>
@@ -593,7 +552,7 @@
                         <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 22
                         </div>
-                        <div class="indicator-weight">Weight: 8%</div>
+                        <div class="indicator-weight">Weight: 10%</div>
                     </div>
                 </div>
                 <p class="indicator-description">Ratio of Utilities (defensive) to Consumer Discretionary (cyclical). Rising ratio indicates rotation to safety.</p>
@@ -697,7 +656,7 @@
                         <div class="indicator-status" style="background: rgba(200, 108, 97, 0.15); border-color: #C86C61; color: #C86C61;">
                             Elevated: 99
                         </div>
-                        <div class="indicator-weight">Weight: 5%</div>
+                        <div class="indicator-weight">Weight: 6%</div>
                     </div>
                 </div>
                 <p class="indicator-description">Ratio of gold to S&P 500. Rising ratio indicates flight to gold as safe haven.</p>
@@ -723,7 +682,7 @@
                         <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 1
                         </div>
-                        <div class="indicator-weight">Weight: 8%</div>
+                        <div class="indicator-weight">Weight: 10%</div>
                     </div>
                 </div>
                 <p class="indicator-description">Current drawdown from 52-week high. Direct measure of equity market stress.</p>
@@ -778,15 +737,15 @@
         <table class="rankings-table">
             <thead><tr><th>Indicator</th><th>Signal Ratio</th><th>Detection</th><th>Tier</th></tr></thead>
             <tbody>
-                <tr><td>HY Credit Spread</td><td>2.19x</td><td>100%</td><td>1</td></tr>
-                <tr><td>BBB Credit Spread</td><td>2.18x</td><td>100%</td><td>1</td></tr>
-                <tr><td>VIX</td><td>1.89x</td><td>100%</td><td>2</td></tr>
-                <tr><td>Defensive Rotation</td><td>1.89x</td><td>100%</td><td>2</td></tr>
-                <tr><td>USD Index</td><td>1.73x</td><td>100%</td><td>2</td></tr>
-                <tr><td>Sector Correlation</td><td>1.75x</td><td>100%</td><td>3</td></tr>
-                <tr><td>VIX Term Structure</td><td>1.63x</td><td>100%</td><td>3</td></tr>
-                <tr><td>Safe Haven (GLD/SPY)</td><td>1.38x</td><td>100%</td><td>4</td></tr>
-                <tr><td>S&P 500 Drawdown</td><td>N/A</td><td>100%</td><td>4</td></tr>
+                <tr><td>HY Credit Spread</td><td>2.20x</td><td>100%</td><td>1</td></tr>
+                <tr><td>IG Credit Spread</td><td>2.15x</td><td>100%</td><td>2</td></tr>
+                <tr><td>VIX</td><td>1.90x</td><td>100%</td><td>3</td></tr>
+                <tr><td>Defensive Rotation</td><td>1.90x</td><td>100%</td><td>4</td></tr>
+                <tr><td>USD Index</td><td>1.72x</td><td>100%</td><td>5</td></tr>
+                <tr><td>Sector Correlation</td><td>1.76x</td><td>100%</td><td>6</td></tr>
+                <tr><td>VIX Term Structure</td><td>1.67x</td><td>100%</td><td>7</td></tr>
+                <tr><td>Safe Haven (GLD/SPY)</td><td>1.42x</td><td>100%</td><td>8</td></tr>
+                <tr><td>S&P 500 Drawdown</td><td>N/A</td><td>100%</td><td>9</td></tr>
             </tbody>
         </table>
         

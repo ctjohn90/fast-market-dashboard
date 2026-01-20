@@ -31,22 +31,22 @@ class CompositeResult:
 
 
 # Indicator weights for composite score
-# Weights based on backtest signal ratios and detection rates
+# Weights based on backtest signal ratios, detection rates, and VIF analysis
+# Note: BBB Credit removed due to severe multicollinearity with IG Credit (VIF > 100)
 WEIGHTS = {
     # Tier 1: Credit spreads (best discriminators, 2.1-2.2x ratio)
-    "hy_credit": 0.18,           # 2.20x ratio, 100% detection
-    "ig_credit": 0.12,           # 2.15x ratio, 100% detection (NEW)
-    "bbb_credit": 0.10,          # 2.18x ratio, 100% detection
+    "hy_credit": 0.20,           # 2.20x ratio, 100% detection, VIF 4.88
+    "ig_credit": 0.15,           # 2.15x ratio, 100% detection (covers BBB signal)
     # Tier 2: Volatility & Flight (1.7-1.9x ratio)
-    "volatility": 0.15,          # 1.90x ratio, 100% detection
-    "defensive_rotation": 0.08,  # 1.90x ratio, 100% detection
-    "usd_flight": 0.08,          # 1.72x ratio, 100% detection
+    "volatility": 0.15,          # 1.90x ratio, 100% detection, VIF 1.79
+    "defensive_rotation": 0.10,  # 1.90x ratio, 100% detection
+    "usd_flight": 0.08,          # 1.72x ratio, 100% detection, VIF 1.35
     # Tier 3: Market structure (1.6-1.8x ratio)
     "sector_correlation": 0.08,  # 1.76x ratio, unique signal
     "vix_term_structure": 0.08,  # 1.67x ratio, panic indicator
     # Tier 4: Supporting indicators
-    "safe_haven": 0.05,          # 1.42x ratio
-    "equity_drawdown": 0.08,     # Direct measure, confirms stress
+    "safe_haven": 0.06,          # 1.42x ratio
+    "equity_drawdown": 0.10,     # Direct measure, VIF 2.59
 }
 
 # Indicator metadata for dashboard descriptions
@@ -63,20 +63,11 @@ INDICATOR_INFO = {
     "ig_credit": {
         "name": "Investment Grade Credit Spread",
         "source": "FRED (BAMLC0A0CM)",
-        "description": "Option-adjusted spread for investment grade corporate bonds vs treasuries. Broader measure of corporate credit stress than BBB alone.",
+        "description": "Option-adjusted spread for investment grade corporate bonds vs treasuries. Covers the full IG spectrum including BBB (VIF analysis showed BBB was redundant).",
         "interpretation": "Higher = more stress. IG spreads widen when investors flee corporate bonds for safer assets.",
         "signal_ratio": "2.15x",
         "detection_rate": "100% (7/7 events)",
-        "weight_rationale": "Third-highest signal ratio. Captures broad investment grade credit stress.",
-    },
-    "bbb_credit": {
-        "name": "BBB Credit Spread",
-        "source": "FRED (BAMLC0A4CBBB)",
-        "description": "Spread for BBB-rated corporate bonds (lowest investment grade). Sensitive to downgrade fears.",
-        "interpretation": "Higher = more stress. BBB is the largest segment of corporate debt.",
-        "signal_ratio": "2.18x",
-        "detection_rate": "100% (7/7 events)",
-        "weight_rationale": "Captures IG downgrade risk during stress. BBB is 'fallen angel' risk zone.",
+        "weight_rationale": "Second-highest weight in credit. Consolidated from IG+BBB after multicollinearity analysis.",
     },
     "volatility": {
         "name": "VIX (Volatility Index)",
@@ -269,9 +260,8 @@ class IndicatorCalculator:
         if ig:
             indicators["ig_credit"] = ig
 
-        bbb = self._get_indicator("BAMLC0A4CBBB", "BBB Credit Spread", "percentile")
-        if bbb:
-            indicators["bbb_credit"] = bbb
+        # Note: BBB Credit removed - multicollinearity analysis showed VIF > 100 with IG Credit
+        # IG Credit now covers the full investment grade spectrum
 
         usd = self._get_indicator("DTWEXBGS", "USD Index", "percentile")
         if usd:
