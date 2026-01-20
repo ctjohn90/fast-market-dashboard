@@ -46,7 +46,7 @@
         }
         
         .score-card {
-            background: rgba(234, 179, 8, 0.1);
+            background: rgba(34, 197, 94, 0.1);
             border: 1px solid #262626;
             border-radius: 12px;
             padding: 32px;
@@ -57,7 +57,7 @@
         .score-value {
             font-size: 72px;
             font-weight: 700;
-            color: #eab308;
+            color: #22c55e;
             line-height: 1;
             margin-bottom: 8px;
         }
@@ -73,8 +73,8 @@
         .stress-level {
             display: inline-block;
             padding: 6px 16px;
-            background: #eab30822;
-            color: #eab308;
+            background: #22c55e22;
+            color: #22c55e;
             border-radius: 6px;
             font-size: 14px;
             font-weight: 600;
@@ -185,21 +185,122 @@
             height: 8px;
             border-radius: 50%;
         }
+        
+        /* Login overlay styles */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .login-overlay.hidden {
+            display: none;
+        }
+        
+        .login-box {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 32px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+        
+        .login-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 8px;
+        }
+        
+        .login-subtitle {
+            font-size: 13px;
+            color: #737373;
+            margin-bottom: 24px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #e5e5e5;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        
+        .login-input:focus {
+            border-color: #3b82f6;
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 12px 16px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .login-button:hover {
+            background: #2563eb;
+        }
+        
+        .login-error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+        
+        .dashboard-content {
+            display: none;
+        }
+        
+        .dashboard-content.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <div class="login-title">Fast Market Dashboard Testing</div>
+            <div class="login-subtitle">Enter password to continue</div>
+            <input type="password" id="passwordInput" class="login-input" placeholder="Password" autofocus>
+            <button id="loginButton" class="login-button">Access Dashboard</button>
+            <div id="loginError" class="login-error">Incorrect password</div>
+        </div>
+    </div>
+    
+    
+    <div class="dashboard-content" id="dashboardContent">
     <div class="container">
         <header>
             <h1>Fast Market Dashboard</h1>
             <div class="meta">
-                As of January 16, 2026 | Generated 2026-01-19 20:45
+                As of January 16, 2026 | Generated 2026-01-19 21:08
             </div>
         </header>
         
         <div class="score-card">
-            <div class="score-value">32</div>
+            <div class="score-value">26</div>
             <div class="score-label">Composite Stress Score</div>
-            <div class="stress-level">Normal</div>
+            <div class="stress-level">Calm</div>
         </div>
         
         <div class="grid">
@@ -253,6 +354,24 @@
             </tr>
         
             <tr>
+                <td class="indicator-name">Defensive Rotation</td>
+                <td class="indicator-value">0.35</td>
+                <td class="indicator-percentile" style="color: #22c55e">22</td>
+                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
+        <path d="M0.0,2.0 L4.1,9.7 L8.3,8.1 L12.4,7.3 L16.6,14.2 L20.7,14.2 L24.8,15.8 L29.0,15.8 L33.1,18.2 L37.2,16.6 L41.4,19.0 L45.5,20.7 L49.7,22.7 L53.8,20.3 L57.9,20.3 L62.1,19.9 L66.2,15.0 L70.3,14.2 L74.5,14.2 L78.6,2.4 L82.8,16.2 L86.9,17.8 L91.0,27.2 L95.2,30.0 L99.3,30.0 L103.4,29.6 L107.6,28.4 L111.7,18.2 L115.9,15.8 L120.0,17.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></td>
+            </tr>
+        
+            <tr>
+                <td class="indicator-name">Sector Correlation</td>
+                <td class="indicator-value">0.19</td>
+                <td class="indicator-percentile" style="color: #22c55e">23</td>
+                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
+        <path d="M0.0,13.5 L4.1,10.6 L8.3,13.2 L12.4,10.4 L16.6,10.0 L20.7,6.4 L24.8,6.6 L29.0,7.3 L33.1,7.3 L37.2,4.9 L41.4,5.9 L45.5,6.9 L49.7,9.1 L53.8,11.0 L57.9,10.4 L62.1,8.0 L66.2,5.4 L70.3,6.2 L74.5,6.0 L78.6,2.9 L82.8,2.0 L86.9,4.5 L91.0,7.2 L95.2,16.6 L99.3,20.1 L103.4,19.6 L107.6,20.4 L111.7,25.5 L115.9,28.1 L120.0,30.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></td>
+            </tr>
+        
+            <tr>
                 <td class="indicator-name">VIX Term Structure</td>
                 <td class="indicator-value">0.84</td>
                 <td class="indicator-percentile" style="color: #ef4444">77</td>
@@ -267,24 +386,6 @@
                 <td class="indicator-percentile" style="color: #ef4444">99</td>
                 <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
         <path d="M0.0,23.2 L4.1,30.0 L8.3,29.0 L12.4,19.4 L16.6,23.2 L20.7,11.7 L24.8,8.8 L29.0,8.8 L33.1,7.8 L37.2,3.9 L41.4,5.9 L45.5,9.7 L49.7,4.9 L53.8,3.9 L57.9,4.9 L62.1,2.0 L66.2,18.4 L70.3,18.4 L74.5,18.4 L78.6,17.4 L82.8,9.7 L86.9,5.9 L91.0,11.7 L95.2,6.8 L99.3,6.8 L103.4,2.0 L107.6,2.0 L111.7,2.0 L115.9,3.0 L120.0,3.9" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">Sector Correlation</td>
-                <td class="indicator-value">0.19</td>
-                <td class="indicator-percentile" style="color: #22c55e">23</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,13.5 L4.1,10.6 L8.3,13.2 L12.4,10.4 L16.6,10.0 L20.7,6.4 L24.8,6.6 L29.0,7.3 L33.1,7.3 L37.2,4.9 L41.4,5.9 L45.5,6.9 L49.7,9.1 L53.8,11.0 L57.9,10.4 L62.1,8.0 L66.2,5.4 L70.3,6.2 L74.5,6.0 L78.6,2.9 L82.8,2.0 L86.9,4.5 L91.0,7.2 L95.2,16.6 L99.3,20.1 L103.4,19.6 L107.6,20.4 L111.7,25.5 L115.9,28.1 L120.0,30.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">Risk Appetite (IWM/SPY)</td>
-                <td class="indicator-value">0.38</td>
-                <td class="indicator-percentile" style="color: #22c55e">0</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,16.0 L4.1,12.9 L8.3,14.6 L12.4,16.7 L16.6,17.9 L20.7,20.7 L24.8,19.8 L29.0,17.9 L33.1,17.4 L37.2,17.7 L41.4,17.4 L45.5,17.4 L49.7,19.1 L53.8,14.3 L57.9,13.6 L62.1,9.8 L66.2,7.5 L70.3,2.0 L74.5,2.0 L78.6,10.5 L82.8,17.4 L86.9,21.0 L91.0,21.7 L95.2,24.8 L99.3,25.3 L103.4,26.2 L107.6,27.6 L111.7,30.0 L115.9,30.0 L120.0,30.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg></td>
             </tr>
         
@@ -334,6 +435,7 @@
                 <div id="chart"></div>
             </div>
         </div>
+    </div>
     </div>
     
     <script>
@@ -404,5 +506,50 @@
         
         Plotly.newPlot('chart', [trace], layout, config);
     </script>
+    
+    <script>
+        const HASH = "a36c1564c88c9b3e5f7b035139ea8ac3d2adc544d72f4f5562c79c177bf12c75";
+        
+        async function sha256(text) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+        }
+        
+        async function checkAuth() {
+            const stored = sessionStorage.getItem("dashboard_auth");
+            if (stored === HASH) {
+                showDashboard();
+            }
+        }
+        
+        function showDashboard() {
+            document.getElementById("loginOverlay").classList.add("hidden");
+            document.getElementById("dashboardContent").classList.add("visible");
+        }
+        
+        async function handleLogin() {
+            const password = document.getElementById("passwordInput").value;
+            const hash = await sha256(password);
+            
+            if (hash === HASH) {
+                sessionStorage.setItem("dashboard_auth", hash);
+                showDashboard();
+            } else {
+                document.getElementById("loginError").style.display = "block";
+                document.getElementById("passwordInput").value = "";
+            }
+        }
+        
+        document.getElementById("loginButton").addEventListener("click", handleLogin);
+        document.getElementById("passwordInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleLogin();
+        });
+        
+        checkAuth();
+    </script>
+    
 </body>
 </html>

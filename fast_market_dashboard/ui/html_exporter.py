@@ -1,11 +1,18 @@
 """Export dashboard as self-contained HTML."""
 
+import hashlib
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
 from fast_market_dashboard.config import Settings
 from fast_market_dashboard.indicators.calculator import IndicatorCalculator
+
+
+def hash_password(password: str) -> str:
+    """Create SHA-256 hash of password."""
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
 def get_stress_color(score: float) -> str:
@@ -55,16 +62,23 @@ def generate_sparkline_svg(values: list[float], color: str, width: int = 120, he
     </svg>'''
 
 
-def export_html(output_path: Path | str | None = None) -> Path:
+def export_html(output_path: Path | str | None = None, password: str | None = None) -> Path:
     """
     Generate self-contained HTML dashboard.
     
     Args:
         output_path: Where to save the HTML file. Defaults to dist/index.html
+        password: If provided, adds client-side password protection
         
     Returns:
         Path to the generated file
     """
+    # Get password from env if not provided
+    if password is None:
+        password = os.getenv("DASHBOARD_PASSWORD")
+    
+    password_hash = hash_password(password) if password else None
+    
     settings = Settings()
     calculator = IndicatorCalculator(settings)
     
@@ -290,9 +304,110 @@ def export_html(output_path: Path | str | None = None) -> Path:
             height: 8px;
             border-radius: 50%;
         }}
+        
+        /* Login overlay styles */
+        .login-overlay {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }}
+        
+        .login-overlay.hidden {{
+            display: none;
+        }}
+        
+        .login-box {{
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 32px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }}
+        
+        .login-title {{
+            font-size: 18px;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 8px;
+        }}
+        
+        .login-subtitle {{
+            font-size: 13px;
+            color: #737373;
+            margin-bottom: 24px;
+        }}
+        
+        .login-input {{
+            width: 100%;
+            padding: 12px 16px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #e5e5e5;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+        }}
+        
+        .login-input:focus {{
+            border-color: #3b82f6;
+        }}
+        
+        .login-button {{
+            width: 100%;
+            padding: 12px 16px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }}
+        
+        .login-button:hover {{
+            background: #2563eb;
+        }}
+        
+        .login-error {{
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }}
+        
+        .dashboard-content {{
+            display: none;
+        }}
+        
+        .dashboard-content.visible {{
+            display: block;
+        }}
     </style>
 </head>
 <body>
+    {"" if not password_hash else '''
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <div class="login-title">Fast Market Dashboard Testing</div>
+            <div class="login-subtitle">Enter password to continue</div>
+            <input type="password" id="passwordInput" class="login-input" placeholder="Password" autofocus>
+            <button id="loginButton" class="login-button">Access Dashboard</button>
+            <div id="loginError" class="login-error">Incorrect password</div>
+        </div>
+    </div>
+    '''}
+    
+    <div class="{"dashboard-content" if password_hash else "dashboard-content visible"}" id="dashboardContent">
     <div class="container">
         <header>
             <h1>Fast Market Dashboard</h1>
@@ -358,6 +473,7 @@ def export_html(output_path: Path | str | None = None) -> Path:
                 <div id="chart"></div>
             </div>
         </div>
+    </div>
     </div>
     
     <script>
@@ -428,6 +544,51 @@ def export_html(output_path: Path | str | None = None) -> Path:
         
         Plotly.newPlot('chart', [trace], layout, config);
     </script>
+    {"" if not password_hash else f'''
+    <script>
+        const HASH = "{password_hash}";
+        
+        async function sha256(text) {{
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+        }}
+        
+        async function checkAuth() {{
+            const stored = sessionStorage.getItem("dashboard_auth");
+            if (stored === HASH) {{
+                showDashboard();
+            }}
+        }}
+        
+        function showDashboard() {{
+            document.getElementById("loginOverlay").classList.add("hidden");
+            document.getElementById("dashboardContent").classList.add("visible");
+        }}
+        
+        async function handleLogin() {{
+            const password = document.getElementById("passwordInput").value;
+            const hash = await sha256(password);
+            
+            if (hash === HASH) {{
+                sessionStorage.setItem("dashboard_auth", hash);
+                showDashboard();
+            }} else {{
+                document.getElementById("loginError").style.display = "block";
+                document.getElementById("passwordInput").value = "";
+            }}
+        }}
+        
+        document.getElementById("loginButton").addEventListener("click", handleLogin);
+        document.getElementById("passwordInput").addEventListener("keypress", (e) => {{
+            if (e.key === "Enter") handleLogin();
+        }});
+        
+        checkAuth();
+    </script>
+    '''}
 </body>
 </html>'''
     
@@ -454,12 +615,20 @@ def main() -> None:
         default=None,
         help="Output path (default: dist/index.html)"
     )
+    parser.add_argument(
+        "-p", "--password",
+        type=str,
+        default=None,
+        help="Password for client-side protection (or set DASHBOARD_PASSWORD env var)"
+    )
     args = parser.parse_args()
     
     try:
-        path = export_html(args.output)
+        path = export_html(args.output, args.password)
         print(f"Dashboard exported to: {path}")
         print(f"File size: {path.stat().st_size / 1024:.1f} KB")
+        if args.password or os.getenv("DASHBOARD_PASSWORD"):
+            print("Password protection: enabled")
     except ValueError as e:
         print(f"Error: {e}")
         raise SystemExit(1)

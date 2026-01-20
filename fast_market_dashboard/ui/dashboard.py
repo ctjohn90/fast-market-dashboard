@@ -157,8 +157,8 @@ def render_indicator_panel(result: CompositeResult) -> None:
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def render_history_chart(history: pd.DataFrame) -> None:
-    """Render 90-day composite history with regime bands."""
+def render_history_chart(history: pd.DataFrame, days: int = 90) -> None:
+    """Render composite history with regime bands."""
     if history.empty:
         st.info("Insufficient history for chart")
         return
@@ -189,7 +189,7 @@ def render_history_chart(history: pd.DataFrame) -> None:
         height=280, margin=dict(l=0, r=0, t=30, b=0),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         showlegend=False,
-        title=dict(text="90-Day Composite History", font=dict(size=12, color="#94a3b8"), x=0),
+        title=dict(text=f"{days}-Day Composite History", font=dict(size=12, color="#94a3b8"), x=0),
         xaxis=dict(showgrid=True, gridcolor="#1e293b", tickfont=dict(color="#64748b", size=10), tickformat="%b %d"),
         yaxis=dict(showgrid=True, gridcolor="#1e293b", tickfont=dict(color="#64748b", size=10), range=[0, 100], dtick=25),
         hovermode="x unified",
@@ -282,14 +282,14 @@ def render_alerts(result: CompositeResult, history: pd.DataFrame) -> None:
         )
 
 
-def render_dashboard_tab(calc: IndicatorCalculator, result: CompositeResult, history: pd.DataFrame) -> None:
+def render_dashboard_tab(calc: IndicatorCalculator, result: CompositeResult, history: pd.DataFrame, days: int = 90) -> None:
     """Render the main dashboard tab."""
     render_regime_header(result, history)
     
     col_left, col_right = st.columns([2, 1])
     
     with col_left:
-        render_history_chart(history)
+        render_history_chart(history, days)
     
     with col_right:
         st.markdown("<div style='color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;'>Alerts</div>", unsafe_allow_html=True)
@@ -478,13 +478,37 @@ def render_backtest_tab() -> None:
     
     st.markdown("### Composite Score Weights")
     
+    st.markdown("""
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+        <h4 style="color: #f1f5f9; margin: 0 0 0.5rem 0;">Weighting Rationale</h4>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0 0 0.75rem 0;">
+            Weights are assigned based on three factors:
+        </p>
+        <ol style="color: #94a3b8; font-size: 0.85rem; margin: 0; padding-left: 1.25rem;">
+            <li style="margin-bottom: 0.5rem;">
+                <strong style="color: #e2e8f0;">Signal Ratio</strong> - Higher signal ratios (indicator more elevated during stress) get more weight. 
+                Credit spreads (2.18-2.19x) outperformed VIX (1.89x) in distinguishing stress from normal.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+                <strong style="color: #e2e8f0;">Detection Rate</strong> - Must catch 100% of major stress events to be included. 
+                Curve inversion (33% detection) was excluded despite theoretical importance.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+                <strong style="color: #e2e8f0;">Independence</strong> - Indicators measuring different risk dimensions get priority. 
+                VIX (fear), credit (default risk), and USD (flight to safety) capture distinct signals.
+            </li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
+    
     weights_data = []
     for key, weight in sorted(WEIGHTS.items(), key=lambda x: x[1], reverse=True):
         info = INDICATOR_INFO.get(key, {})
         weights_data.append({
             "Indicator": info.get("name", key),
             "Weight": f"{weight*100:.0f}%",
-            "Rationale": f"Signal ratio: {info.get('signal_ratio', 'N/A')}"
+            "Signal Ratio": info.get("signal_ratio", "N/A"),
+            "Why": info.get("weight_rationale", "Based on backtest performance")
         })
     
     st.dataframe(pd.DataFrame(weights_data), use_container_width=True, hide_index=True)
@@ -543,11 +567,31 @@ def main() -> None:
         unsafe_allow_html=True,
     )
     
+    # Period selector
+    period_options = {
+        "90 Days": 90,
+        "180 Days": 180,
+        "1 Year": 365,
+        "2 Years": 730,
+        "5 Years": 1825,
+        "All Available": 5000,
+    }
+    
+    col_period, col_spacer = st.columns([1, 4])
+    with col_period:
+        selected_period = st.selectbox(
+            "History Period",
+            options=list(period_options.keys()),
+            index=0,
+            label_visibility="collapsed",
+        )
+    history_days = period_options[selected_period]
+    
     # Load data
     with st.spinner("Loading..."):
         calc = IndicatorCalculator()
         result = calc.calculate()
-        history = calc.get_history(days=90)
+        history = calc.get_history(days=history_days)
     
     if result is None:
         st.error("No data available. Run: python -m fast_market_dashboard.data.fred_fetcher --all")
@@ -557,7 +601,7 @@ def main() -> None:
     tab1, tab2, tab3 = st.tabs(["Dashboard", "Indicators", "Backtest"])
     
     with tab1:
-        render_dashboard_tab(calc, result, history)
+        render_dashboard_tab(calc, result, history, history_days)
     
     with tab2:
         render_indicators_tab(result)
