@@ -10,10 +10,31 @@
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        /* Schwab Color Palette */
+        :root {
+            --schwab-core-blue: #00A0DF;
+            --schwab-dark-grey: #425563;
+            --schwab-true-blue: #446CA9;
+            --schwab-light-grey: #98A4AE;
+            --schwab-steel-blue: #6BA4B8;
+            --schwab-black: #000000;
+            --schwab-white: #FFFFFF;
+            --schwab-teal: #008D95;
+            --schwab-turquoise: #64CCC9;
+            --schwab-tangerine: #FFC72C;
+            --schwab-orange: #F7A800;
+            --schwab-capri-blue: #4EC1E0;
+            --schwab-leaf-green: #7A9C49;
+            --schwab-olive: #9DAE88;
+            --schwab-cayenne: #C86C61;
+            --schwab-pale-blue: #BBDDE6;
+            --schwab-purple: #9E4777;
+        }
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: var(--schwab-black);
+            color: var(--schwab-white);
             min-height: 100vh;
             padding: 1rem 2rem;
         }
@@ -25,12 +46,12 @@
             justify-content: space-between;
             align-items: center;
             padding-bottom: 1rem;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid var(--schwab-steel-blue);
             margin-bottom: 1rem;
         }
-        .header-title { font-size: 1.5rem; font-weight: 600; color: #f1f5f9; }
-        .header-subtitle { color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }
-        .header-meta { color: #64748b; font-size: 0.7rem; text-align: right; }
+        .header-title { font-size: 1.5rem; font-weight: 600; color: var(--schwab-white); }
+        .header-subtitle { color: var(--schwab-light-grey); font-size: 0.75rem; margin-top: 0.25rem; }
+        .header-meta { color: var(--schwab-light-grey); font-size: 0.7rem; text-align: right; }
         
         /* Period Selector */
         .period-selector {
@@ -39,43 +60,43 @@
             gap: 0.5rem;
             margin-bottom: 1rem;
         }
-        .period-selector label { color: #94a3b8; font-size: 0.8rem; }
+        .period-selector label { color: var(--schwab-light-grey); font-size: 0.8rem; }
         .period-select {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #e2e8f0;
+            background: var(--schwab-dark-grey);
+            border: 1px solid var(--schwab-steel-blue);
+            color: var(--schwab-white);
             padding: 0.5rem 1rem;
             border-radius: 6px;
             font-size: 0.85rem;
             cursor: pointer;
         }
-        .period-select:focus { outline: none; border-color: #3b82f6; }
+        .period-select:focus { outline: none; border-color: var(--schwab-core-blue); }
         
         /* Tabs */
         .tabs {
             display: flex;
             gap: 2rem;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid var(--schwab-steel-blue);
             margin-bottom: 1.5rem;
         }
         .tab {
             padding: 0.75rem 0;
-            color: #94a3b8;
+            color: var(--schwab-light-grey);
             font-weight: 500;
             cursor: pointer;
             border-bottom: 2px solid transparent;
             transition: all 0.2s;
         }
-        .tab:hover { color: #e2e8f0; }
-        .tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+        .tab:hover { color: var(--schwab-white); }
+        .tab.active { color: var(--schwab-core-blue); border-bottom-color: var(--schwab-core-blue); }
         .tab-content { display: none; width: 100%; }
         .tab-content.active { display: block; width: 100%; }
         
         /* Regime Header */
         .regime-header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid #334155;
-            border-left: 4px solid #10b981;
+            background: linear-gradient(135deg, var(--schwab-dark-grey) 0%, var(--schwab-black) 100%);
+            border: 1px solid var(--schwab-steel-blue);
+            border-left: 4px solid var(--schwab-leaf-green);
             border-radius: 8px;
             padding: 1.5rem 2rem;
             margin-bottom: 0.5rem;
@@ -83,20 +104,20 @@
             justify-content: space-between;
             align-items: center;
         }
-        .regime-label-small { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .regime-label-small { color: var(--schwab-light-grey); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
         .regime-score-row { display: flex; align-items: baseline; gap: 1rem; margin-top: 0.25rem; }
-        .regime-score { font-size: 3.5rem; font-weight: 700; color: #10b981; font-family: 'SF Mono', 'Consolas', monospace; line-height: 1; }
-        .regime-delta { font-size: 1.25rem; color: #ef4444; font-family: 'SF Mono', 'Consolas', monospace; }
-        .regime-badge { background: #10b98122; border: 1px solid #10b981; color: #10b981; padding: 0.5rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 1.1rem; }
-        .regime-action { color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; text-align: right; }
-        .regime-footer { color: #64748b; font-size: 0.7rem; margin-bottom: 1rem; }
+        .regime-score { font-size: 3.5rem; font-weight: 700; color: var(--schwab-leaf-green); font-family: 'SF Mono', 'Consolas', monospace; line-height: 1; }
+        .regime-delta { font-size: 1.25rem; color: var(--schwab-cayenne); font-family: 'SF Mono', 'Consolas', monospace; }
+        .regime-badge { background: rgba(122, 156, 73, 0.15); border: 1px solid var(--schwab-leaf-green); color: var(--schwab-leaf-green); padding: 0.5rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 1.1rem; }
+        .regime-action { color: var(--schwab-light-grey); font-size: 0.8rem; margin-top: 0.5rem; text-align: right; }
+        .regime-footer { color: var(--schwab-light-grey); font-size: 0.7rem; margin-bottom: 1rem; }
         
         /* Alerts */
         .alerts-container { margin-bottom: 1rem; }
         .alert { border-radius: 4px; padding: 0.5rem 1rem; font-size: 0.8rem; margin-bottom: 0.5rem; }
-        .alert-ok { background: #10b98122; border: 1px solid #10b981; color: #6ee7b7; }
-        .alert-high { background: #ef444422; border: 1px solid #ef4444; color: #fca5a5; }
-        .alert-elevated { background: #f9731622; border: 1px solid #f97316; color: #fdba74; }
+        .alert-ok { background: rgba(122, 156, 73, 0.15); border: 1px solid var(--schwab-leaf-green); color: var(--schwab-olive); }
+        .alert-high { background: rgba(200, 108, 97, 0.15); border: 1px solid var(--schwab-cayenne); color: var(--schwab-cayenne); }
+        .alert-elevated { background: rgba(247, 168, 0, 0.15); border: 1px solid var(--schwab-orange); color: var(--schwab-tangerine); }
         .alert-level { font-weight: 600; }
         
         /* Chart - force full width */
@@ -116,7 +137,7 @@
             flex-wrap: wrap;
             gap: 1rem;
             padding: 0.5rem 0;
-            border-top: 1px solid #334155;
+            border-top: 1px solid var(--schwab-steel-blue);
             margin-bottom: 1.5rem;
         }
         .event-item {
@@ -129,83 +150,83 @@
             height: 14px;
             border-radius: 1px;
         }
-        .event-date { color: #94a3b8; font-size: 0.75rem; }
-        .event-label { color: #e2e8f0; font-size: 0.75rem; }
+        .event-date { color: var(--schwab-light-grey); font-size: 0.75rem; }
+        .event-label { color: var(--schwab-white); font-size: 0.75rem; }
         
         /* Bottom Grid */
         .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         @media (max-width: 1024px) { .bottom-grid { grid-template-columns: 1fr; } }
         
         /* Cards */
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem 1.5rem; }
-        .card-title { color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+        .card { background: var(--schwab-dark-grey); border: 1px solid var(--schwab-steel-blue); border-radius: 8px; padding: 1rem 1.5rem; }
+        .card-title { color: var(--schwab-light-grey); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
         
         /* Signal Breakdown */
         .signal-row { margin-bottom: 0.75rem; }
         .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
-        .signal-name { color: #e2e8f0; font-size: 0.85rem; }
-        .signal-weight { color: #64748b; font-size: 0.7rem; margin-left: 0.5rem; }
+        .signal-name { color: var(--schwab-white); font-size: 0.85rem; }
+        .signal-weight { color: var(--schwab-light-grey); font-size: 0.7rem; margin-left: 0.5rem; }
         .signal-value { font-family: 'SF Mono', monospace; font-size: 0.9rem; font-weight: 600; }
-        .signal-bar-bg { background: #0f172a; border-radius: 2px; height: 6px; overflow: hidden; }
+        .signal-bar-bg { background: var(--schwab-black); border-radius: 2px; height: 6px; overflow: hidden; }
         .signal-bar { height: 100%; border-radius: 2px; }
         
         /* Current Levels */
-        .level-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #334155; }
+        .level-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--schwab-steel-blue); }
         .level-row:last-child { border-bottom: none; }
-        .level-name { color: #94a3b8; font-size: 0.8rem; }
-        .level-value { color: #e2e8f0; font-family: 'SF Mono', monospace; font-size: 0.85rem; }
+        .level-name { color: var(--schwab-light-grey); font-size: 0.8rem; }
+        .level-value { color: var(--schwab-white); font-family: 'SF Mono', monospace; font-size: 0.85rem; }
         
         /* Indicators Tab */
-        .tab-heading { color: #f1f5f9; font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .tab-intro { color: #94a3b8; margin-bottom: 1.5rem; }
-        .indicator-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+        .tab-heading { color: var(--schwab-white); font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .tab-intro { color: var(--schwab-light-grey); margin-bottom: 1.5rem; }
+        .indicator-card { background: var(--schwab-dark-grey); border: 1px solid var(--schwab-steel-blue); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
         .indicator-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
-        .indicator-card-title { color: #f1f5f9; font-size: 1.1rem; margin: 0; }
-        .indicator-card-source { color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }
+        .indicator-card-title { color: var(--schwab-white); font-size: 1.1rem; margin: 0; }
+        .indicator-card-source { color: var(--schwab-light-grey); font-size: 0.75rem; margin-top: 0.25rem; }
         .indicator-card-status-wrap { text-align: right; }
         .indicator-status { padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; border: 1px solid; display: inline-block; }
-        .indicator-weight { color: #64748b; font-size: 0.7rem; margin-top: 0.25rem; }
-        .indicator-description { color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1rem; }
+        .indicator-weight { color: var(--schwab-light-grey); font-size: 0.7rem; margin-top: 0.25rem; }
+        .indicator-description { color: var(--schwab-pale-blue); font-size: 0.9rem; margin-bottom: 1rem; }
         .indicator-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .indicator-detail-box { background: #0f172a; padding: 0.75rem; border-radius: 4px; }
-        .indicator-detail-label { color: #64748b; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem; }
-        .indicator-detail-value { color: #e2e8f0; font-size: 0.85rem; }
+        .indicator-detail-box { background: var(--schwab-black); padding: 0.75rem; border-radius: 4px; }
+        .indicator-detail-label { color: var(--schwab-light-grey); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem; }
+        .indicator-detail-value { color: var(--schwab-white); font-size: 0.85rem; }
         @media (max-width: 768px) { .indicator-details { grid-template-columns: 1fr; } }
         
         /* Backtest & Models Tabs */
-        .section-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; }
-        .section-title { color: #f1f5f9; font-size: 1.1rem; margin: 1.5rem 0 1rem 0; }
+        .section-box { background: var(--schwab-dark-grey); border: 1px solid var(--schwab-steel-blue); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; }
+        .section-title { color: var(--schwab-white); font-size: 1.1rem; margin: 1.5rem 0 1rem 0; }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .metric-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; text-align: center; }
+        .metric-box { background: var(--schwab-dark-grey); border: 1px solid var(--schwab-steel-blue); border-radius: 8px; padding: 1rem; text-align: center; }
         .metric-value { font-size: 1.5rem; font-weight: 600; margin: 0.25rem 0; }
-        .metric-label { color: #64748b; font-size: 0.7rem; text-transform: uppercase; }
-        .metric-sublabel { color: #94a3b8; font-size: 0.75rem; }
-        .rankings-table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }
-        .rankings-table th { text-align: left; padding: 0.75rem 1rem; color: #94a3b8; font-size: 0.8rem; border-bottom: 1px solid #334155; }
-        .rankings-table td { padding: 0.75rem 1rem; color: #e2e8f0; font-size: 0.85rem; border-bottom: 1px solid #334155; }
+        .metric-label { color: var(--schwab-light-grey); font-size: 0.7rem; text-transform: uppercase; }
+        .metric-sublabel { color: var(--schwab-light-grey); font-size: 0.75rem; }
+        .rankings-table { width: 100%; border-collapse: collapse; background: var(--schwab-dark-grey); border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }
+        .rankings-table th { text-align: left; padding: 0.75rem 1rem; color: var(--schwab-light-grey); font-size: 0.8rem; border-bottom: 1px solid var(--schwab-steel-blue); }
+        .rankings-table td { padding: 0.75rem 1rem; color: var(--schwab-white); font-size: 0.85rem; border-bottom: 1px solid var(--schwab-steel-blue); }
         .rankings-table tr:last-child td { border-bottom: none; }
-        .stress-events { color: #94a3b8; margin-left: 1.25rem; margin-top: 0.5rem; }
+        .stress-events { color: var(--schwab-light-grey); margin-left: 1.25rem; margin-top: 0.5rem; }
         .stress-events li { margin-bottom: 0.25rem; }
-        .failed { color: #ef4444 !important; }
-        .warning { color: #f59e0b !important; }
+        .failed { color: var(--schwab-cayenne) !important; }
+        .warning { color: var(--schwab-orange) !important; }
         
         /* Stage boxes */
         .stage-row { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
         .stage-badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem; color: white; white-space: nowrap; }
-        .stage-text { color: #94a3b8; font-size: 0.9rem; }
-        .stage-text strong { color: #e2e8f0; }
+        .stage-text { color: var(--schwab-light-grey); font-size: 0.9rem; }
+        .stage-text strong { color: var(--schwab-white); }
         
         /* Login overlay */
-        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--schwab-black); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .login-overlay.hidden { display: none; }
-        .login-box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 32px; width: 100%; max-width: 360px; text-align: center; }
-        .login-title { font-size: 18px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
-        .login-subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
-        .login-input { width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; margin-bottom: 16px; outline: none; }
-        .login-input:focus { border-color: #3b82f6; }
-        .login-button { width: 100%; padding: 12px 16px; background: #3b82f6; border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
-        .login-button:hover { background: #2563eb; }
-        .login-error { color: #ef4444; font-size: 13px; margin-top: 12px; display: none; }
+        .login-box { background: var(--schwab-dark-grey); border: 1px solid var(--schwab-steel-blue); border-radius: 12px; padding: 32px; width: 100%; max-width: 360px; text-align: center; }
+        .login-title { font-size: 18px; font-weight: 600; color: var(--schwab-white); margin-bottom: 8px; }
+        .login-subtitle { font-size: 13px; color: var(--schwab-light-grey); margin-bottom: 24px; }
+        .login-input { width: 100%; padding: 12px 16px; background: var(--schwab-black); border: 1px solid var(--schwab-steel-blue); border-radius: 8px; color: var(--schwab-white); font-size: 14px; margin-bottom: 16px; outline: none; }
+        .login-input:focus { border-color: var(--schwab-core-blue); }
+        .login-button { width: 100%; padding: 12px 16px; background: var(--schwab-core-blue); border: none; border-radius: 8px; color: var(--schwab-white); font-size: 14px; font-weight: 500; cursor: pointer; }
+        .login-button:hover { background: var(--schwab-true-blue); }
+        .login-error { color: var(--schwab-cayenne); font-size: 13px; margin-top: 12px; display: none; }
         .dashboard-content { display: none; }
         .dashboard-content.visible { display: block; }
     </style>
@@ -297,90 +318,90 @@
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name">! Safe Haven (GLD/SPY) <span class="signal-weight">5% wt</span></span>
-                    <span class="signal-value" style="color: #fca5a5">99</span>
+                    <span class="signal-value" style="color: #C86C61">99</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 98.80478087649402%; background: #ef4444;"></div>
+                    <div class="signal-bar" style="width: 98.80478087649402%; background: #C86C61;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> VIX Term Structure <span class="signal-weight">10% wt</span></span>
-                    <span class="signal-value" style="color: #fdba74">77</span>
+                    <span class="signal-value" style="color: #FFC72C">77</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 77.47059989613874%; background: #f97316;"></div>
+                    <div class="signal-bar" style="width: 77.47059989613874%; background: #F7A800;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> VIX <span class="signal-weight">15% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">25</span>
+                    <span class="signal-value" style="color: #9DAE88">25</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 25.099601593625497%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 25.099601593625497%; background: #7A9C49;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> Sector Correlation <span class="signal-weight">10% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">23</span>
+                    <span class="signal-value" style="color: #9DAE88">23</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 23.39541611726483%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 23.39541611726483%; background: #7A9C49;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> USD Index <span class="signal-weight">10% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">22</span>
+                    <span class="signal-value" style="color: #9DAE88">22</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 21.91235059760956%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 21.91235059760956%; background: #7A9C49;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> Defensive Rotation <span class="signal-weight">10% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">22</span>
+                    <span class="signal-value" style="color: #9DAE88">22</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 21.51394422310757%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 21.51394422310757%; background: #7A9C49;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> BBB Credit Spread <span class="signal-weight">15% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">8</span>
+                    <span class="signal-value" style="color: #9DAE88">8</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 7.968127490039841%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 7.968127490039841%; background: #7A9C49;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> HY Credit Spread <span class="signal-weight">20% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">7</span>
+                    <span class="signal-value" style="color: #9DAE88">7</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 6.772908366533864%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 6.772908366533864%; background: #7A9C49;"></div>
                 </div>
             </div>
         
             <div class="signal-row">
                 <div class="signal-header">
                     <span class="signal-name"> S&P 500 Drawdown <span class="signal-weight">5% wt</span></span>
-                    <span class="signal-value" style="color: #6ee7b7">1</span>
+                    <span class="signal-value" style="color: #9DAE88">1</span>
                 </div>
                 <div class="signal-bar-bg">
-                    <div class="signal-bar" style="width: 1.0680395054226142%; background: #10b981;"></div>
+                    <div class="signal-bar" style="width: 1.0680395054226142%; background: #7A9C49;"></div>
                 </div>
             </div>
         
@@ -450,7 +471,7 @@
                         <div class="indicator-card-source">FRED (BAMLH0A0HYM2)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 7
                         </div>
                         <div class="indicator-weight">Weight: 20%</div>
@@ -476,7 +497,7 @@
                         <div class="indicator-card-source">FRED (BAMLC0A4CBBB)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 8
                         </div>
                         <div class="indicator-weight">Weight: 15%</div>
@@ -502,7 +523,7 @@
                         <div class="indicator-card-source">FRED (VIXCLS)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 25
                         </div>
                         <div class="indicator-weight">Weight: 15%</div>
@@ -528,7 +549,7 @@
                         <div class="indicator-card-source">Yahoo Finance (derived)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 22
                         </div>
                         <div class="indicator-weight">Weight: 10%</div>
@@ -554,7 +575,7 @@
                         <div class="indicator-card-source">FRED (DTWEXBGS)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 22
                         </div>
                         <div class="indicator-weight">Weight: 10%</div>
@@ -580,7 +601,7 @@
                         <div class="indicator-card-source">Yahoo Finance (derived)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 23
                         </div>
                         <div class="indicator-weight">Weight: 10%</div>
@@ -606,7 +627,7 @@
                         <div class="indicator-card-source">Yahoo Finance (VIX/VIX3M)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #ef444422; border-color: #ef4444; color: #ef4444;">
+                        <div class="indicator-status" style="background: rgba(200, 108, 97, 0.15); border-color: #C86C61; color: #C86C61;">
                             Elevated: 77
                         </div>
                         <div class="indicator-weight">Weight: 10%</div>
@@ -632,7 +653,7 @@
                         <div class="indicator-card-source">Yahoo Finance (derived)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #ef444422; border-color: #ef4444; color: #ef4444;">
+                        <div class="indicator-status" style="background: rgba(200, 108, 97, 0.15); border-color: #C86C61; color: #C86C61;">
                             Elevated: 99
                         </div>
                         <div class="indicator-weight">Weight: 5%</div>
@@ -658,7 +679,7 @@
                         <div class="indicator-card-source">FRED (SP500)</div>
                     </div>
                     <div class="indicator-card-status-wrap">
-                        <div class="indicator-status" style="background: #10b98122; border-color: #10b981; color: #10b981;">
+                        <div class="indicator-status" style="background: rgba(122, 156, 73, 0.15); border-color: #7A9C49; color: #7A9C49;">
                             Low: 1
                         </div>
                         <div class="indicator-weight">Weight: 5%</div>
@@ -686,8 +707,8 @@
         <h2 class="tab-heading">Backtesting Methodology & Results</h2>
         
         <div class="section-box">
-            <h3 style="color: #f1f5f9; margin-bottom: 0.75rem;">How We Test Indicators</h3>
-            <p style="color: #94a3b8;">Each indicator is evaluated against <strong style="color: #e2e8f0;">6 major market stress events</strong>:</p>
+            <h3 style="color: #FFFFFF; margin-bottom: 0.75rem;">How We Test Indicators</h3>
+            <p style="color: #98A4AE;">Each indicator is evaluated against <strong style="color: #FFFFFF;">6 major market stress events</strong>:</p>
             <ul class="stress-events">
                 <li><strong>2008-09:</strong> Financial Crisis (56.8% drawdown)</li>
                 <li><strong>2011:</strong> Debt Ceiling Crisis (19.4% drawdown)</li>
@@ -700,14 +721,14 @@
         
         <div class="metrics-grid">
             <div class="section-box">
-                <h4 style="color: #f1f5f9; margin-bottom: 0.5rem;">Signal Ratio</h4>
-                <p style="color: #94a3b8; font-size: 0.85rem;">Average percentile during stress / Average during normal times.</p>
-                <p style="color: #10b981; font-size: 0.85rem; margin-top: 0.5rem;">Higher is better. 2.0x = twice as elevated during stress.</p>
+                <h4 style="color: #FFFFFF; margin-bottom: 0.5rem;">Signal Ratio</h4>
+                <p style="color: #98A4AE; font-size: 0.85rem;">Average percentile during stress / Average during normal times.</p>
+                <p style="color: #7A9C49; font-size: 0.85rem; margin-top: 0.5rem;">Higher is better. 2.0x = twice as elevated during stress.</p>
             </div>
             <div class="section-box">
-                <h4 style="color: #f1f5f9; margin-bottom: 0.5rem;">Detection Rate</h4>
-                <p style="color: #94a3b8; font-size: 0.85rem;">% of stress events where indicator exceeded 70th percentile.</p>
-                <p style="color: #10b981; font-size: 0.85rem; margin-top: 0.5rem;">Higher is better. 100% = caught every major event.</p>
+                <h4 style="color: #FFFFFF; margin-bottom: 0.5rem;">Detection Rate</h4>
+                <p style="color: #98A4AE; font-size: 0.85rem;">% of stress events where indicator exceeded 70th percentile.</p>
+                <p style="color: #7A9C49; font-size: 0.85rem; margin-top: 0.5rem;">Higher is better. 100% = caught every major event.</p>
             </div>
         </div>
         
@@ -747,12 +768,12 @@
         <p class="tab-intro">Testing whether non-linear relationships improve fast market detection.</p>
         
         <div class="section-box">
-            <h4 style="color: #ef4444; margin-bottom: 0.75rem;">What Linear Models Miss</h4>
-            <ul style="color: #94a3b8; padding-left: 1.25rem;">
-                <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Convexity at extremes</strong> - Going from 70th to 85th percentile is fundamentally different than 40th to 55th.</li>
-                <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Convergence effects</strong> - When VIX, credit, and USD all spike together, it's multiplicative, not additive.</li>
-                <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Regime shifts</strong> - In calm markets, credit leads. In stress, everything correlates.</li>
-                <li><strong style="color: #e2e8f0;">Lead-lag relationships</strong> - Credit spreads widen before equities fall.</li>
+            <h4 style="color: #C86C61; margin-bottom: 0.75rem;">What Linear Models Miss</h4>
+            <ul style="color: #98A4AE; padding-left: 1.25rem;">
+                <li style="margin-bottom: 0.5rem;"><strong style="color: #FFFFFF;">Convexity at extremes</strong> - Going from 70th to 85th percentile is fundamentally different than 40th to 55th.</li>
+                <li style="margin-bottom: 0.5rem;"><strong style="color: #FFFFFF;">Convergence effects</strong> - When VIX, credit, and USD all spike together, it's multiplicative, not additive.</li>
+                <li style="margin-bottom: 0.5rem;"><strong style="color: #FFFFFF;">Regime shifts</strong> - In calm markets, credit leads. In stress, everything correlates.</li>
+                <li><strong style="color: #FFFFFF;">Lead-lag relationships</strong> - Credit spreads widen before equities fall.</li>
             </ul>
         </div>
         
@@ -760,12 +781,12 @@
         <table class="rankings-table">
             <thead><tr><th>Event</th><th>Linear</th><th>Hybrid</th></tr></thead>
             <tbody>
-                <tr><td>Financial Crisis (2008)</td><td>72</td><td style="color: #10b981;">95</td></tr>
-                <tr><td>Debt Ceiling (2011)</td><td>72</td><td style="color: #10b981;">95</td></tr>
-                <tr><td>China Devaluation (2015)</td><td>72</td><td style="color: #10b981;">95</td></tr>
-                <tr><td>Fed Tightening (2018)</td><td>71</td><td style="color: #10b981;">93</td></tr>
-                <tr><td>COVID Crash (2020)</td><td>73</td><td style="color: #10b981;">95</td></tr>
-                <tr><td>Rate Shock (2022)</td><td>72</td><td style="color: #10b981;">99</td></tr>
+                <tr><td>Financial Crisis (2008)</td><td>72</td><td style="color: #7A9C49;">95</td></tr>
+                <tr><td>Debt Ceiling (2011)</td><td>72</td><td style="color: #7A9C49;">95</td></tr>
+                <tr><td>China Devaluation (2015)</td><td>72</td><td style="color: #7A9C49;">95</td></tr>
+                <tr><td>Fed Tightening (2018)</td><td>71</td><td style="color: #7A9C49;">93</td></tr>
+                <tr><td>COVID Crash (2020)</td><td>73</td><td style="color: #7A9C49;">95</td></tr>
+                <tr><td>Rate Shock (2022)</td><td>72</td><td style="color: #7A9C49;">99</td></tr>
             </tbody>
         </table>
         
@@ -773,31 +794,31 @@
         <div class="metrics-grid">
             <div class="metric-box">
                 <div class="metric-label">Signal Ratio</div>
-                <div class="metric-value" style="color: #3b82f6;">+24%</div>
+                <div class="metric-value" style="color: #00A0DF;">+24%</div>
                 <div class="metric-sublabel">Hybrid vs Linear</div>
             </div>
             <div class="metric-box">
                 <div class="metric-label">Peak Score</div>
-                <div class="metric-value" style="color: #10b981;">95-99</div>
+                <div class="metric-value" style="color: #7A9C49;">95-99</div>
                 <div class="metric-sublabel">Hybrid in stress</div>
             </div>
             <div class="metric-box">
                 <div class="metric-label">Lead Time</div>
-                <div class="metric-value" style="color: #f59e0b;">+0.8d</div>
+                <div class="metric-value" style="color: #F7A800;">+0.8d</div>
                 <div class="metric-sublabel">Early warning</div>
             </div>
             <div class="metric-box">
                 <div class="metric-label">Precision</div>
-                <div class="metric-value" style="color: #ef4444;">-28%</div>
+                <div class="metric-value" style="color: #C86C61;">-28%</div>
                 <div class="metric-sublabel">More false positives</div>
             </div>
         </div>
         
         <h3 class="section-title">Practical Recommendation</h3>
-        <div class="section-box" style="background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%); border-color: #3b82f6;">
-            <h4 style="color: #f1f5f9; margin-bottom: 1rem;">Two-Stage Monitoring Approach</h4>
+        <div class="section-box" style="background: linear-gradient(135deg, #446CA9 0%, #425563 100%); border-color: #00A0DF;">
+            <h4 style="color: #FFFFFF; margin-bottom: 1rem;">Two-Stage Monitoring Approach</h4>
             <div class="stage-row">
-                <span class="stage-badge" style="background: #10b981;">STAGE 1</span>
+                <span class="stage-badge" style="background: #7A9C49;">STAGE 1</span>
                 <span class="stage-text">Use <strong>Linear model</strong> for daily monitoring. Fewer false alarms, stable baseline.</span>
             </div>
             <div class="stage-row">
@@ -805,7 +826,7 @@
                 <span class="stage-text">When Linear crosses <strong>50+</strong>, switch to <strong>Hybrid lens</strong> for amplified signal.</span>
             </div>
             <div class="stage-row">
-                <span class="stage-badge" style="background: #ef4444;">STAGE 3</span>
+                <span class="stage-badge" style="background: #C86C61;">STAGE 3</span>
                 <span class="stage-text">If Hybrid exceeds <strong>85</strong>, treat as confirmed fast market.</span>
             </div>
         </div>
@@ -815,8 +836,8 @@
     </div>
     
     <script>
-        // Market Events
-        const MARKET_EVENTS = [{"date": "2025-01-27", "label": "DeepSeek shock", "color": "#ef4444"}, {"date": "2025-04-02", "label": "Liberation Day tariffs", "color": "#ef4444"}, {"date": "2025-04-09", "label": "90-day tariff pause", "color": "#10b981"}, {"date": "2025-06-27", "label": "New all-time high", "color": "#10b981"}, {"date": "2025-11-18", "label": "VIX spike to 52", "color": "#ef4444"}, {"date": "2025-12-10", "label": "Fed hawkish pivot", "color": "#f59e0b"}];
+        // Market Events (using Schwab colors)
+        const MARKET_EVENTS = [{"date": "2025-01-27", "label": "DeepSeek shock", "color": "#C86C61"}, {"date": "2025-04-02", "label": "Liberation Day tariffs", "color": "#C86C61"}, {"date": "2025-04-09", "label": "90-day tariff pause", "color": "#7A9C49"}, {"date": "2025-06-27", "label": "New all-time high", "color": "#7A9C49"}, {"date": "2025-11-18", "label": "VIX spike to 52", "color": "#C86C61"}, {"date": "2025-12-10", "label": "Fed hawkish pivot", "color": "#F7A800"}];
         
         // Chart data with multiple models
         const CHART_DATA = {
@@ -913,11 +934,11 @@
             
             // Build shapes for regime bands and event lines
             const shapes = [
-                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#10b981', opacity: 0.08, line: { width: 0 }, yref: 'y' },
-                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#f59e0b', opacity: 0.08, line: { width: 0 }, yref: 'y' },
-                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#f97316', opacity: 0.08, line: { width: 0 }, yref: 'y' },
-                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 100, fillcolor: '#ef4444', opacity: 0.08, line: { width: 0 }, yref: 'y' },
-                { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: { color: '#475569', width: 1, dash: 'dot' }, yref: 'y' },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#7A9C49', opacity: 0.08, line: { width: 0 }, yref: 'y' },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#FFC72C', opacity: 0.08, line: { width: 0 }, yref: 'y' },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#F7A800', opacity: 0.08, line: { width: 0 }, yref: 'y' },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 100, fillcolor: '#C86C61', opacity: 0.08, line: { width: 0 }, yref: 'y' },
+                { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: { color: '#6BA4B8', width: 1, dash: 'dot' }, yref: 'y' },
                 { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 50, line: { color: '#475569', width: 1, dash: 'dot' }, yref: 'y' },
                 { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 70, line: { color: '#475569', width: 1, dash: 'dot' }, yref: 'y' },
             ];
@@ -933,8 +954,8 @@
             const traceStress = {
                 x: dates, y: values,
                 type: 'scatter', mode: 'lines',
-                line: { color: '#3b82f6', width: 2.5 },
-                fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.15)',
+                line: { color: '#4EC1E0', width: 2.5 },
+                fill: 'tozeroy', fillcolor: 'rgba(78, 193, 224, 0.15)',
                 name: modelNames[model],
                 yaxis: 'y',
                 hovertemplate: 'Stress: %{y:.1f}<extra></extra>',
@@ -944,7 +965,7 @@
             const traceSP500 = {
                 x: dates, y: sp500Adjusted,
                 type: 'scatter', mode: 'lines',
-                line: { color: '#a855f7', width: 2 },
+                line: { color: '#9E4777', width: 2 },
                 name: sp500Label,
                 yaxis: 'y2',
                 hovertemplate: sp500HoverTemplate,
@@ -959,29 +980,29 @@
                 autosize: true,
                 paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
                 margin: { t: 30, r: 80, b: 50, l: 60 },
-                xaxis: { showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: { size: 11 }, tickformat: '%b %d' },
+                xaxis: { showgrid: true, gridcolor: '#425563', color: '#98A4AE', tickfont: { size: 11 }, tickformat: '%b %d' },
                 yaxis: { 
-                    showgrid: true, gridcolor: '#1e293b', color: '#3b82f6', tickfont: { size: 11, color: '#3b82f6' }, 
-                    range: [0, 100], dtick: 25, title: { text: 'Stress Score', font: { size: 12, color: '#3b82f6' } },
+                    showgrid: true, gridcolor: '#425563', color: '#4EC1E0', tickfont: { size: 11, color: '#4EC1E0' }, 
+                    range: [0, 100], dtick: 25, title: { text: 'Stress Score', font: { size: 12, color: '#4EC1E0' } },
                     side: 'left'
                 },
                 yaxis2: {
                     overlaying: 'y', side: 'right',
-                    showgrid: false, color: '#a855f7', tickfont: { size: 11, color: '#a855f7' },
+                    showgrid: false, color: '#9E4777', tickfont: { size: 11, color: '#9E4777' },
                     range: [maxSP + spPadding, minSP - spPadding],  // INVERTED: high at bottom
                     tickformat: '+.0f',
                     ticksuffix: '%',
-                    title: { text: returnType === 'daily' ? 'Daily Return (inv)' : 'Cumulative (inv)', font: { size: 12, color: '#a855f7' } }
+                    title: { text: returnType === 'daily' ? 'Daily Return (inv)' : 'Cumulative (inv)', font: { size: 12, color: '#9E4777' } }
                 },
                 shapes: shapes,
                 hovermode: 'x unified',
                 hoverlabel: {
-                    bgcolor: '#1e293b',
-                    bordercolor: '#334155',
-                    font: { color: '#e2e8f0', size: 13 }
+                    bgcolor: '#425563',
+                    bordercolor: '#6BA4B8',
+                    font: { color: '#FFFFFF', size: 13 }
                 },
                 showlegend: true,
-                legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: 1.08, font: { size: 11, color: '#e2e8f0' }, bgcolor: 'rgba(0,0,0,0)' },
+                legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: 1.08, font: { size: 11, color: '#FFFFFF' }, bgcolor: 'rgba(0,0,0,0)' },
             };
             
             const config = { 
