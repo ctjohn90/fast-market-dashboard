@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Market Dashboard</title>
+    <title>Fast Market Dashboard Testing</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -13,177 +15,245 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #0a0a0a;
-            color: #e5e5e5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
             min-height: 100vh;
-            padding: 24px;
+            padding: 1.5rem;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
-        header {
+        /* Header */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #262626;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 1rem;
         }
         
-        h1 {
-            font-size: 20px;
+        .header-title {
+            font-size: 1.5rem;
             font-weight: 600;
-            color: #fafafa;
+            color: #f1f5f9;
         }
         
-        .meta {
-            font-size: 13px;
-            color: #737373;
+        .header-subtitle {
+            color: #64748b;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
         }
         
-        .score-card {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid #262626;
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 24px;
-            text-align: center;
+        .header-meta {
+            color: #64748b;
+            font-size: 0.7rem;
+            text-align: right;
         }
         
-        .score-value {
-            font-size: 72px;
-            font-weight: 700;
-            color: #22c55e;
-            line-height: 1;
-            margin-bottom: 8px;
+        /* Regime Header */
+        .regime-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-left: 4px solid #10b981;
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .score-label {
-            font-size: 14px;
-            color: #a3a3a3;
+        .regime-label-small {
+            color: #94a3b8;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
+            letter-spacing: 0.1em;
         }
         
-        .stress-level {
-            display: inline-block;
-            padding: 6px 16px;
-            background: #22c55e22;
-            color: #22c55e;
-            border-radius: 6px;
-            font-size: 14px;
+        .regime-score-row {
+            display: flex;
+            align-items: baseline;
+            gap: 1rem;
+            margin-top: 0.25rem;
+        }
+        
+        .regime-score {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #10b981;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            line-height: 1;
+        }
+        
+        .regime-delta {
+            font-size: 1.25rem;
+            color: #ef4444;
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+        
+        .regime-badge {
+            background: #10b98122;
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
             font-weight: 600;
+            font-size: 1.1rem;
         }
         
-        .grid {
+        .regime-action {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        
+        .regime-footer {
+            color: #64748b;
+            font-size: 0.7rem;
+            margin-top: 1rem;
+            border-top: 1px solid #334155;
+            padding-top: 0.75rem;
+        }
+        
+        /* Grid Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .bottom-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
+            gap: 1.5rem;
         }
         
-        @media (max-width: 768px) {
-            .grid {
+        @media (max-width: 1024px) {
+            .main-grid, .bottom-grid {
                 grid-template-columns: 1fr;
             }
         }
         
+        /* Cards */
         .card {
-            background: #141414;
-            border: 1px solid #262626;
-            border-radius: 12px;
-            padding: 20px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
         }
         
         .card-title {
-            font-size: 13px;
-            color: #737373;
+            color: #94a3b8;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 16px;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        /* Chart */
+        #chart {
+            height: 280px;
         }
         
-        th {
-            text-align: left;
-            font-size: 11px;
-            color: #525252;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 8px 0;
-            border-bottom: 1px solid #262626;
+        /* Alerts */
+        .alert {
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
         }
         
-        td {
-            padding: 12px 0;
-            border-bottom: 1px solid #1a1a1a;
-            vertical-align: middle;
+        .alert-ok {
+            background: #10b98122;
+            border: 1px solid #10b981;
+            color: #6ee7b7;
         }
         
-        tr:last-child td {
+        .alert-high {
+            background: #ef444422;
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
+        
+        .alert-elevated {
+            background: #f9731622;
+            border: 1px solid #f97316;
+            color: #fdba74;
+        }
+        
+        .alert-level {
+            font-weight: 600;
+        }
+        
+        /* Signal Breakdown */
+        .signal-row {
+            margin-bottom: 0.75rem;
+        }
+        
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .signal-name {
+            color: #e2e8f0;
+            font-size: 0.85rem;
+        }
+        
+        .signal-weight {
+            color: #64748b;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+        
+        .signal-value {
+            font-family: 'SF Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .signal-bar-bg {
+            background: #0f172a;
+            border-radius: 2px;
+            height: 6px;
+            overflow: hidden;
+        }
+        
+        .signal-bar {
+            height: 100%;
+            border-radius: 2px;
+        }
+        
+        /* Current Levels */
+        .level-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .level-row:last-child {
             border-bottom: none;
         }
         
-        .indicator-name {
-            font-size: 14px;
-            color: #d4d4d4;
+        .level-name {
+            color: #94a3b8;
+            font-size: 0.8rem;
         }
         
-        .indicator-value {
-            font-size: 14px;
-            color: #737373;
-            text-align: right;
-            padding-right: 16px;
-        }
-        
-        .indicator-percentile {
-            font-size: 16px;
-            font-weight: 600;
-            text-align: right;
-            padding-right: 16px;
-        }
-        
-        .indicator-sparkline {
-            text-align: right;
-        }
-        
-        #chart {
-            height: 300px;
-        }
-        
-        .chart-card {
-            grid-column: 1 / -1;
-        }
-        
-        .thresholds {
-            display: flex;
-            gap: 24px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #262626;
-        }
-        
-        .threshold {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #737373;
-        }
-        
-        .threshold-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
+        .level-value {
+            color: #e2e8f0;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.85rem;
         }
         
         /* Login overlay styles */
@@ -193,7 +263,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: #0a0a0a;
+            background: #0f172a;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -205,8 +275,8 @@
         }
         
         .login-box {
-            background: #141414;
-            border: 1px solid #262626;
+            background: #1e293b;
+            border: 1px solid #334155;
             border-radius: 12px;
             padding: 32px;
             width: 100%;
@@ -217,23 +287,23 @@
         .login-title {
             font-size: 18px;
             font-weight: 600;
-            color: #fafafa;
+            color: #f1f5f9;
             margin-bottom: 8px;
         }
         
         .login-subtitle {
             font-size: 13px;
-            color: #737373;
+            color: #64748b;
             margin-bottom: 24px;
         }
         
         .login-input {
             width: 100%;
             padding: 12px 16px;
-            background: #0a0a0a;
-            border: 1px solid #262626;
+            background: #0f172a;
+            border: 1px solid #334155;
             border-radius: 8px;
-            color: #e5e5e5;
+            color: #e2e8f0;
             font-size: 14px;
             margin-bottom: 16px;
             outline: none;
@@ -290,149 +360,189 @@
     
     <div class="dashboard-content" id="dashboardContent">
     <div class="container">
-        <header>
-            <h1>Fast Market Dashboard</h1>
-            <div class="meta">
-                As of January 16, 2026 | Generated 2026-01-19 21:08
+        <div class="header">
+            <div>
+                <div class="header-title">Market Stress Monitor</div>
+                <div class="header-subtitle">Asset Management Risk Dashboard</div>
             </div>
-        </header>
-        
-        <div class="score-card">
-            <div class="score-value">26</div>
-            <div class="score-label">Composite Stress Score</div>
-            <div class="stress-level">Calm</div>
+            <div class="header-meta">
+                Data: FRED + Yahoo Finance<br>Refresh: Daily EOD
+            </div>
         </div>
         
-        <div class="grid">
-            <div class="card">
-                <div class="card-title">Component Breakdown</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Indicator</th>
-                            <th style="text-align: right; padding-right: 16px;">Value</th>
-                            <th style="text-align: right; padding-right: 16px;">%ile</th>
-                            <th style="text-align: right;">30d</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        
-            <tr>
-                <td class="indicator-name">HY Credit Spread</td>
-                <td class="indicator-value">2.71</td>
-                <td class="indicator-percentile" style="color: #22c55e">7</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,10.9 L4.1,12.9 L8.3,15.7 L12.4,10.9 L16.6,11.1 L20.7,9.3 L24.8,13.6 L29.0,9.5 L33.1,9.7 L37.2,2.5 L41.4,2.0 L45.5,5.6 L49.7,10.9 L53.8,14.5 L57.9,19.1 L62.1,18.4 L66.2,15.9 L70.3,15.2 L74.5,18.8 L78.6,21.8 L82.8,19.8 L86.9,22.3 L91.0,24.5 L95.2,24.8 L99.3,26.8 L103.4,28.0 L107.6,28.2 L111.7,27.7 L115.9,27.0 L120.0,30.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">VIX</td>
-                <td class="indicator-value">15.84</td>
-                <td class="indicator-percentile" style="color: #22c55e">25</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,17.7 L4.1,20.5 L8.3,22.7 L12.4,10.3 L16.6,8.0 L20.7,20.9 L24.8,27.6 L29.0,20.7 L33.1,12.7 L37.2,12.9 L41.4,2.0 L45.5,8.2 L49.7,27.4 L53.8,30.0 L57.9,30.0 L62.1,30.0 L66.2,29.8 L70.3,29.2 L74.5,28.8 L78.6,25.8 L82.8,28.2 L86.9,26.0 L91.0,27.4 L95.2,21.1 L99.3,20.5 L103.4,28.4 L107.6,22.9 L111.7,16.3 L115.9,7.6 L120.0,17.3" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">BBB Credit Spread</td>
-                <td class="indicator-value">0.97</td>
-                <td class="indicator-percentile" style="color: #22c55e">8</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,2.0 L4.1,9.5 L8.3,17.1 L12.4,21.9 L16.6,21.9 L20.7,21.9 L24.8,21.9 L29.0,16.2 L33.1,8.9 L37.2,2.3 L41.4,2.6 L45.5,2.9 L49.7,9.2 L53.8,9.2 L57.9,16.5 L62.1,21.9 L66.2,21.9 L70.3,21.9 L74.5,15.5 L78.6,15.5 L82.8,15.5 L86.9,15.5 L91.0,21.9 L95.2,15.2 L99.3,15.2 L103.4,24.6 L107.6,24.6 L111.7,27.6 L115.9,27.6 L120.0,30.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">USD Index</td>
-                <td class="indicator-value">120.59</td>
-                <td class="indicator-percentile" style="color: #22c55e">22</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,2.0 L4.1,5.0 L8.3,7.0 L12.4,3.4 L16.6,11.1 L20.7,12.3 L24.8,12.0 L29.0,9.5 L33.1,12.3 L37.2,12.3 L41.4,25.3 L45.5,23.6 L49.7,25.6 L53.8,25.8 L57.9,21.7 L62.1,23.9 L66.2,20.9 L70.3,24.7 L74.5,27.8 L78.6,30.0 L82.8,29.4 L86.9,29.2 L91.0,29.2 L95.2,25.8 L99.3,28.6 L103.4,27.8 L107.6,25.0 L111.7,23.6 L115.9,20.6 L120.0,16.1" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">Defensive Rotation</td>
-                <td class="indicator-value">0.35</td>
-                <td class="indicator-percentile" style="color: #22c55e">22</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,2.0 L4.1,9.7 L8.3,8.1 L12.4,7.3 L16.6,14.2 L20.7,14.2 L24.8,15.8 L29.0,15.8 L33.1,18.2 L37.2,16.6 L41.4,19.0 L45.5,20.7 L49.7,22.7 L53.8,20.3 L57.9,20.3 L62.1,19.9 L66.2,15.0 L70.3,14.2 L74.5,14.2 L78.6,2.4 L82.8,16.2 L86.9,17.8 L91.0,27.2 L95.2,30.0 L99.3,30.0 L103.4,29.6 L107.6,28.4 L111.7,18.2 L115.9,15.8 L120.0,17.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">Sector Correlation</td>
-                <td class="indicator-value">0.19</td>
-                <td class="indicator-percentile" style="color: #22c55e">23</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,13.5 L4.1,10.6 L8.3,13.2 L12.4,10.4 L16.6,10.0 L20.7,6.4 L24.8,6.6 L29.0,7.3 L33.1,7.3 L37.2,4.9 L41.4,5.9 L45.5,6.9 L49.7,9.1 L53.8,11.0 L57.9,10.4 L62.1,8.0 L66.2,5.4 L70.3,6.2 L74.5,6.0 L78.6,2.9 L82.8,2.0 L86.9,4.5 L91.0,7.2 L95.2,16.6 L99.3,20.1 L103.4,19.6 L107.6,20.4 L111.7,25.5 L115.9,28.1 L120.0,30.0" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">VIX Term Structure</td>
-                <td class="indicator-value">0.84</td>
-                <td class="indicator-percentile" style="color: #ef4444">77</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,14.1 L4.1,11.8 L8.3,20.5 L12.4,21.9 L16.6,15.4 L20.7,7.0 L24.8,16.0 L29.0,20.8 L33.1,20.7 L37.2,30.0 L41.4,26.2 L45.5,15.8 L49.7,9.8 L53.8,8.3 L57.9,2.0 L62.1,3.7 L66.2,11.1 L70.3,13.3 L74.5,17.1 L78.6,13.1 L82.8,15.0 L86.9,14.8 L91.0,18.2 L95.2,21.2 L99.3,14.3 L103.4,18.7 L107.6,23.0 L111.7,27.0 L115.9,20.8 L120.0,20.1" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">Safe Haven (GLD/SPY)</td>
-                <td class="indicator-value">0.61</td>
-                <td class="indicator-percentile" style="color: #ef4444">99</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,23.2 L4.1,30.0 L8.3,29.0 L12.4,19.4 L16.6,23.2 L20.7,11.7 L24.8,8.8 L29.0,8.8 L33.1,7.8 L37.2,3.9 L41.4,5.9 L45.5,9.7 L49.7,4.9 L53.8,3.9 L57.9,4.9 L62.1,2.0 L66.2,18.4 L70.3,18.4 L74.5,18.4 L78.6,17.4 L82.8,9.7 L86.9,5.9 L91.0,11.7 L95.2,6.8 L99.3,6.8 L103.4,2.0 L107.6,2.0 L111.7,2.0 L115.9,3.0 L120.0,3.9" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-            <tr>
-                <td class="indicator-name">S&P 500 Drawdown</td>
-                <td class="indicator-value">6940.01</td>
-                <td class="indicator-percentile" style="color: #22c55e">1</td>
-                <td class="indicator-sparkline"><svg width="120" height="32" viewBox="0 0 120 32">
-        <path d="M0.0,24.7 L4.1,26.8 L8.3,23.1 L12.4,22.1 L16.6,29.3 L20.7,30.0 L24.8,18.5 L29.0,16.8 L33.1,14.3 L37.2,2.0 L41.4,10.3 L45.5,19.6 L49.7,26.5 L53.8,30.0 L57.9,30.0 L62.1,29.7 L66.2,25.9 L70.3,24.4 L74.5,16.6 L78.6,18.6 L82.8,25.3 L86.9,30.0 L91.0,26.3 L95.2,26.4 L99.3,30.0 L103.4,30.0 L107.6,27.9 L111.7,22.2 L115.9,24.9 L120.0,24.3" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></td>
-            </tr>
-        
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">Score Interpretation</div>
-                <div style="margin-top: 8px;">
-                    <div class="threshold">
-                        <div class="threshold-dot" style="background: #22c55e;"></div>
-                        <span>0-30: Calm markets</span>
-                    </div>
-                    <div class="threshold" style="margin-top: 12px;">
-                        <div class="threshold-dot" style="background: #eab308;"></div>
-                        <span>30-50: Normal conditions</span>
-                    </div>
-                    <div class="threshold" style="margin-top: 12px;">
-                        <div class="threshold-dot" style="background: #f97316;"></div>
-                        <span>50-70: Elevated stress</span>
-                    </div>
-                    <div class="threshold" style="margin-top: 12px;">
-                        <div class="threshold-dot" style="background: #ef4444;"></div>
-                        <span>70-100: Fast market / high stress</span>
-                    </div>
-                </div>
-                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #262626;">
-                    <div style="font-size: 12px; color: #525252; margin-bottom: 8px;">DATA SOURCES</div>
-                    <div style="font-size: 13px; color: #737373;">
-                        FRED (Federal Reserve), Yahoo Finance
-                    </div>
+        <div class="regime-header">
+            <div>
+                <div class="regime-label-small">Market Stress Level</div>
+                <div class="regime-score-row">
+                    <span class="regime-score">25.7</span>
+                    <span class="regime-delta">+12.4 (5d)</span>
                 </div>
             </div>
-            
-            <div class="card chart-card">
+            <div style="text-align: right;">
+                <div class="regime-badge">CALM</div>
+                <div class="regime-action">Risk-on conditions</div>
+            </div>
+        </div>
+        <div class="regime-footer">
+            As of 2026-01-16 | Updated 21:12
+        </div>
+        
+        <div class="main-grid">
+            <div class="card">
                 <div class="card-title">90-Day Composite History</div>
                 <div id="chart"></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Alerts</div>
+                <div class="alert alert-high"><span class="alert-level">HIGH:</span> Safe Haven (GLD/SPY) at 99th percentile</div>
+            </div>
+        </div>
+        
+        <div class="bottom-grid">
+            <div class="card">
+                <div class="card-title">Signal Breakdown (by contribution)</div>
+                
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> VIX Term Structure <span class="signal-weight">10% wt</span></span>
+                    <span class="signal-value" style="color: #fdba74">77</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 77.47059989613874%; background: #f97316;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name">! Safe Haven (GLD/SPY) <span class="signal-weight">5% wt</span></span>
+                    <span class="signal-value" style="color: #fca5a5">99</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 98.80478087649402%; background: #ef4444;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> VIX <span class="signal-weight">15% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">25</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 25.099601593625497%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> Sector Correlation <span class="signal-weight">10% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">23</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 23.39541611726483%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> USD Index <span class="signal-weight">10% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">22</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 21.91235059760956%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> Defensive Rotation <span class="signal-weight">10% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">22</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 21.51394422310757%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> HY Credit Spread <span class="signal-weight">20% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">7</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 6.772908366533864%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> BBB Credit Spread <span class="signal-weight">15% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">8</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 7.968127490039841%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            <div class="signal-row">
+                <div class="signal-header">
+                    <span class="signal-name"> S&P 500 Drawdown <span class="signal-weight">5% wt</span></span>
+                    <span class="signal-value" style="color: #6ee7b7">1</span>
+                </div>
+                <div class="signal-bar-bg">
+                    <div class="signal-bar" style="width: 1.0680395054226142%; background: #10b981;"></div>
+                </div>
+            </div>
+        
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Current Levels</div>
+                
+            <div class="level-row">
+                <span class="level-name">HY Credit Spread</span>
+                <span class="level-value">2.71%</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">VIX</span>
+                <span class="level-value">15.8</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">BBB Credit Spread</span>
+                <span class="level-value">0.97%</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">USD Index</span>
+                <span class="level-value">120.6</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">Defensive Rotation</span>
+                <span class="level-value">0.355</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">Sector Correlation</span>
+                <span class="level-value">0.187</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">VIX Term Structure</span>
+                <span class="level-value">0.835 (backwardation)</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">Safe Haven (GLD/SPY)</span>
+                <span class="level-value">0.609</span>
+            </div>
+        
+            <div class="level-row">
+                <span class="level-name">S&P 500 Drawdown</span>
+                <span class="level-value">6940</span>
+            </div>
+        
             </div>
         </div>
     </div>
@@ -447,62 +557,46 @@
             y: values,
             type: 'scatter',
             mode: 'lines',
-            line: {
-                color: '#3b82f6',
-                width: 2
-            },
+            line: { color: '#3b82f6', width: 2 },
             fill: 'tozeroy',
-            fillcolor: 'rgba(59, 130, 246, 0.1)'
+            fillcolor: 'rgba(59, 130, 246, 0.1)',
+            hovertemplate: '%{x|%b %d, %Y}<br>Score: %{y:.1f}<extra></extra>',
         };
         
         const layout = {
             paper_bgcolor: 'transparent',
             plot_bgcolor: 'transparent',
-            margin: { t: 10, r: 20, b: 40, l: 40 },
+            margin: { t: 10, r: 10, b: 40, l: 40 },
             xaxis: {
-                showgrid: false,
-                color: '#525252',
-                tickfont: { size: 11 }
+                showgrid: true,
+                gridcolor: '#1e293b',
+                color: '#64748b',
+                tickfont: { size: 10 },
+                tickformat: '%b %d',
             },
             yaxis: {
                 showgrid: true,
-                gridcolor: '#1a1a1a',
-                color: '#525252',
-                tickfont: { size: 11 },
-                range: [0, 100]
+                gridcolor: '#1e293b',
+                color: '#64748b',
+                tickfont: { size: 10 },
+                range: [0, 100],
+                dtick: 25,
             },
             shapes: [
-                {
-                    type: 'line',
-                    x0: dates[0],
-                    x1: dates[dates.length - 1],
-                    y0: 30,
-                    y1: 30,
-                    line: { color: '#22c55e', width: 1, dash: 'dot' }
-                },
-                {
-                    type: 'line',
-                    x0: dates[0],
-                    x1: dates[dates.length - 1],
-                    y0: 50,
-                    y1: 50,
-                    line: { color: '#eab308', width: 1, dash: 'dot' }
-                },
-                {
-                    type: 'line',
-                    x0: dates[0],
-                    x1: dates[dates.length - 1],
-                    y0: 70,
-                    y1: 70,
-                    line: { color: '#ef4444', width: 1, dash: 'dot' }
-                }
-            ]
+                // Regime bands
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#10b981', opacity: 0.08, line: { width: 0 } },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#f59e0b', opacity: 0.08, line: { width: 0 } },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#f97316', opacity: 0.08, line: { width: 0 } },
+                { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 100, fillcolor: '#ef4444', opacity: 0.08, line: { width: 0 } },
+                // Threshold lines
+                { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: { color: '#475569', width: 1, dash: 'dot' } },
+                { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 50, line: { color: '#475569', width: 1, dash: 'dot' } },
+                { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 70, line: { color: '#475569', width: 1, dash: 'dot' } },
+            ],
+            hovermode: 'x unified',
         };
         
-        const config = {
-            displayModeBar: false,
-            responsive: true
-        };
+        const config = { displayModeBar: false, responsive: true };
         
         Plotly.newPlot('chart', [trace], layout, config);
     </script>
