@@ -17,6 +17,7 @@ STRESS_EVENTS = [
     {"name": "Fed Tightening 2018", "start": date(2018, 10, 3), "end": date(2018, 12, 24)},
     {"name": "COVID Crash", "start": date(2020, 2, 19), "end": date(2020, 3, 23)},
     {"name": "Rate Shock 2022", "start": date(2022, 1, 3), "end": date(2022, 10, 12)},
+    {"name": "Tariff Shock 2025", "start": date(2025, 4, 2), "end": date(2025, 4, 11)},
 ]
 
 

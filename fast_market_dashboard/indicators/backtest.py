@@ -48,6 +48,12 @@ STRESS_EVENTS = [
         "end": date(2022, 10, 12),
         "peak_drawdown": 25.4,
     },
+    {
+        "name": "Tariff Shock 2025",
+        "start": date(2025, 4, 2),
+        "end": date(2025, 4, 11),
+        "peak_drawdown": 18.9,
+    },
 ]
 
 
