@@ -6,7 +6,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
+
 from fast_market_dashboard.config import Settings
+from fast_market_dashboard.data.cache import DataCache
 from fast_market_dashboard.indicators.calculator import IndicatorCalculator, WEIGHTS, INDICATOR_INFO
 
 
@@ -319,9 +322,31 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     # Prepare chart data (full year)
     chart_dates = []
     chart_values = []
+    sp500_returns = []
     if not history.empty:
         chart_dates = [d.strftime("%Y-%m-%d") for d in history.index]
         chart_values = [round(v, 1) for v in history["composite"].values]
+        
+        # Get S&P 500 data for returns overlay
+        cache = DataCache(settings.db_path)
+        spy_df = cache.get_series("SPY")
+        if not spy_df.empty:
+            # Align with history dates and calculate cumulative return
+            start_date = history.index[0]
+            spy_aligned = spy_df[spy_df.index >= start_date]
+            if not spy_aligned.empty:
+                base_price = spy_aligned["value"].iloc[0]
+                spy_aligned = spy_aligned.copy()
+                spy_aligned["return"] = ((spy_aligned["value"] / base_price) - 1) * 100
+                
+                # Match to chart dates
+                for d in history.index:
+                    if d in spy_aligned.index:
+                        sp500_returns.append(round(spy_aligned.loc[d, "return"], 2))
+                    elif len(sp500_returns) > 0:
+                        sp500_returns.append(sp500_returns[-1])  # Forward fill
+                    else:
+                        sp500_returns.append(0)
     
     # Get regime
     regime = get_regime(result.composite_score)
@@ -491,7 +516,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         
         /* Chart */
         .chart-container {{ margin-bottom: 1rem; }}
-        #chart {{ height: 350px; }}
+        #chart {{ height: 380px; }}
         
         /* Event Legend */
         .event-legend {{
@@ -695,7 +720,8 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         // Chart data
         const CHART_DATA = {{
             dates: {json.dumps(chart_dates)},
-            values: {json.dumps(chart_values)}
+            values: {json.dumps(chart_values)},
+            sp500: {json.dumps(sp500_returns)}
         }};
         
         // Tab switching
@@ -718,6 +744,11 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             const startIdx = Math.max(0, endIdx - days);
             const dates = CHART_DATA.dates.slice(startIdx);
             const values = CHART_DATA.values.slice(startIdx);
+            const sp500 = CHART_DATA.sp500.slice(startIdx);
+            
+            // Recalculate S&P returns from period start
+            const sp500Base = sp500[0] || 0;
+            const sp500Adjusted = sp500.map(v => v - sp500Base);
             
             // Filter events for this period
             const startDate = dates[0];
@@ -726,42 +757,71 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             
             // Build shapes for regime bands and event lines
             const shapes = [
-                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#10b981', opacity: 0.08, line: {{ width: 0 }} }},
-                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#f59e0b', opacity: 0.08, line: {{ width: 0 }} }},
-                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#f97316', opacity: 0.08, line: {{ width: 0 }} }},
-                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 100, fillcolor: '#ef4444', opacity: 0.08, line: {{ width: 0 }} }},
-                {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
-                {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 50, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
-                {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 70, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
+                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#10b981', opacity: 0.08, line: {{ width: 0 }}, yref: 'y' }},
+                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#f59e0b', opacity: 0.08, line: {{ width: 0 }}, yref: 'y' }},
+                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#f97316', opacity: 0.08, line: {{ width: 0 }}, yref: 'y' }},
+                {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 100, fillcolor: '#ef4444', opacity: 0.08, line: {{ width: 0 }}, yref: 'y' }},
+                {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: {{ color: '#475569', width: 1, dash: 'dot' }}, yref: 'y' }},
+                {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 50, line: {{ color: '#475569', width: 1, dash: 'dot' }}, yref: 'y' }},
+                {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 70, line: {{ color: '#475569', width: 1, dash: 'dot' }}, yref: 'y' }},
             ];
             
             visibleEvents.forEach(e => {{
                 shapes.push({{
-                    type: 'line', x0: e.date, x1: e.date, y0: 0, y1: 100,
+                    type: 'line', x0: e.date, x1: e.date, y0: 0, y1: 1, yref: 'paper',
                     line: {{ color: e.color, width: 1.5, dash: 'dash' }}
                 }});
             }});
             
-            const trace = {{
+            // Stress score trace
+            const traceStress = {{
                 x: dates, y: values,
                 type: 'scatter', mode: 'lines',
                 line: {{ color: '#3b82f6', width: 2 }},
                 fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)',
                 name: 'Stress Score',
-                hovertemplate: '%{{x|%b %d, %Y}}<br>Score: %{{y:.1f}}<extra></extra>',
+                yaxis: 'y',
+                hovertemplate: 'Stress: %{{y:.1f}}<extra></extra>',
             }};
+            
+            // S&P 500 return trace (secondary axis, inverted)
+            const traceSP500 = {{
+                x: dates, y: sp500Adjusted,
+                type: 'scatter', mode: 'lines',
+                line: {{ color: '#a855f7', width: 1.5, dash: 'dot' }},
+                name: 'S&P 500 Return',
+                yaxis: 'y2',
+                hovertemplate: 'S&P: %{{y:+.1f}}%<extra></extra>',
+            }};
+            
+            // Calculate y2 range (inverted so drops appear as rises)
+            const minSP = Math.min(...sp500Adjusted);
+            const maxSP = Math.max(...sp500Adjusted);
+            const spPadding = Math.max(5, (maxSP - minSP) * 0.1);
             
             const layout = {{
                 paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-                margin: {{ t: 10, r: 50, b: 40, l: 40 }},
+                margin: {{ t: 10, r: 60, b: 40, l: 50 }},
                 xaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, tickformat: '%b %d' }},
-                yaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, range: [0, 100], dtick: 25 }},
+                yaxis: {{ 
+                    showgrid: true, gridcolor: '#1e293b', color: '#3b82f6', tickfont: {{ size: 10, color: '#3b82f6' }}, 
+                    range: [0, 100], dtick: 25, title: {{ text: 'Stress Score', font: {{ size: 11, color: '#3b82f6' }} }},
+                    side: 'left'
+                }},
+                yaxis2: {{
+                    overlaying: 'y', side: 'right',
+                    showgrid: false, color: '#a855f7', tickfont: {{ size: 10, color: '#a855f7' }},
+                    range: [maxSP + spPadding, minSP - spPadding],  // Inverted
+                    ticksuffix: '%',
+                    title: {{ text: 'S&P 500 Return', font: {{ size: 11, color: '#a855f7' }} }}
+                }},
                 shapes: shapes,
                 hovermode: 'x unified',
-                showlegend: false,
+                showlegend: true,
+                legend: {{ orientation: 'h', x: 0.5, xanchor: 'center', y: 1.02, font: {{ size: 10, color: '#94a3b8' }} }},
             }};
             
-            Plotly.newPlot('chart', [trace], layout, {{ displayModeBar: false, responsive: true }});
+            Plotly.newPlot('chart', [traceStress, traceSP500], layout, {{ displayModeBar: false, responsive: true }});
             
             // Update event legend
             const legendEl = document.getElementById('eventLegend');
