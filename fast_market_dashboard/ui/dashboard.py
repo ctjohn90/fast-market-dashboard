@@ -139,7 +139,7 @@ def render_indicator_panel(result: CompositeResult) -> None:
         
         alert = "!" if pct >= 80 else ""
         
-            st.markdown(
+        st.markdown(
             f"""<div style="margin-bottom: 0.75rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
                     <span style="color: #e2e8f0; font-size: 0.85rem;">
@@ -195,7 +195,7 @@ def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache
     ), secondary_y=False)
     
     # Current point marker
-                fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scatter(
         x=[history.index[-1]], y=[history["composite"].iloc[-1]],
         mode="markers", marker=dict(color=get_regime(history["composite"].iloc[-1])["color"], size=10),
         hoverinfo="skip", showlegend=False,
@@ -255,8 +255,8 @@ def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache
                 x=event_ts, line_dash="dash", line_color=color, line_width=1.5, opacity=0.7,
             )
             visible_events.append((event_date, label, color))
-                
-                fig.update_layout(
+    
+    fig.update_layout(
         height=320, margin=dict(l=0, r=60, t=30, b=0),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         showlegend=True,
@@ -326,7 +326,7 @@ def render_raw_values(result: CompositeResult) -> None:
             formatted = f"{val:.3f}"
         elif "/" in indicator.name or "Rotation" in indicator.name:
             formatted = f"{val:.3f}"
-            else:
+        else:
             formatted = f"{val:.2f}"
         
         st.markdown(
