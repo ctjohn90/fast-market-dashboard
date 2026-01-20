@@ -10,6 +10,17 @@ from fast_market_dashboard.config import Settings
 from fast_market_dashboard.indicators.calculator import IndicatorCalculator, WEIGHTS, INDICATOR_INFO
 
 
+# Market events for annotations
+MARKET_EVENTS = [
+    {"date": "2025-01-27", "label": "DeepSeek shock", "color": "#ef4444"},
+    {"date": "2025-04-02", "label": "Liberation Day tariffs", "color": "#ef4444"},
+    {"date": "2025-04-09", "label": "90-day tariff pause", "color": "#10b981"},
+    {"date": "2025-06-27", "label": "New all-time high", "color": "#10b981"},
+    {"date": "2025-11-18", "label": "VIX spike to 52", "color": "#ef4444"},
+    {"date": "2025-12-10", "label": "Fed hawkish pivot", "color": "#f59e0b"},
+]
+
+
 def hash_password(password: str) -> str:
     """Create SHA-256 hash of password."""
     return hashlib.sha256(password.encode()).hexdigest()
@@ -18,13 +29,13 @@ def hash_password(password: str) -> str:
 def get_regime(score: float) -> dict:
     """Get regime info for a given score."""
     if score < 30:
-        return {"color": "#10b981", "label": "CALM", "action": "Risk-on conditions"}
+        return {"color": "#10b981", "label": "CALM", "action": "Risk-on conditions", "class": "calm"}
     elif score < 50:
-        return {"color": "#f59e0b", "label": "NORMAL", "action": "Standard monitoring"}
+        return {"color": "#f59e0b", "label": "NORMAL", "action": "Standard monitoring", "class": "normal"}
     elif score < 70:
-        return {"color": "#f97316", "label": "ELEVATED", "action": "Increased vigilance"}
+        return {"color": "#f97316", "label": "ELEVATED", "action": "Increased vigilance", "class": "elevated"}
     else:
-        return {"color": "#ef4444", "label": "FAST MARKET", "action": "Active risk management"}
+        return {"color": "#ef4444", "label": "FAST MARKET", "action": "Active risk management", "class": "fast-market"}
 
 
 def format_value(name: str, val: float) -> str:
@@ -137,9 +148,9 @@ def build_backtest_tab() -> str:
     return '''
         <h2 class="tab-heading">Backtesting Methodology & Results</h2>
         
-        <div class="backtest-section">
-            <h3>How We Test Indicators</h3>
-            <p>Each indicator is evaluated against <strong>6 major market stress events</strong>:</p>
+        <div class="section-box">
+            <h3 style="color: #f1f5f9; margin-bottom: 0.75rem;">How We Test Indicators</h3>
+            <p style="color: #94a3b8;">Each indicator is evaluated against <strong style="color: #e2e8f0;">6 major market stress events</strong>:</p>
             <ul class="stress-events">
                 <li><strong>2008-09:</strong> Financial Crisis (56.8% drawdown)</li>
                 <li><strong>2011:</strong> Debt Ceiling Crisis (19.4% drawdown)</li>
@@ -151,28 +162,21 @@ def build_backtest_tab() -> str:
         </div>
         
         <div class="metrics-grid">
-            <div class="metric-box">
-                <h4>Signal Ratio</h4>
-                <p>Average percentile during stress / Average percentile during normal times.</p>
-                <p class="metric-note">Higher is better. A ratio of 2.0x means the indicator is twice as elevated during stress vs. normal times.</p>
+            <div class="section-box">
+                <h4 style="color: #f1f5f9; margin-bottom: 0.5rem;">Signal Ratio</h4>
+                <p style="color: #94a3b8; font-size: 0.85rem;">Average percentile during stress / Average during normal times.</p>
+                <p style="color: #10b981; font-size: 0.85rem; margin-top: 0.5rem;">Higher is better. 2.0x = twice as elevated during stress.</p>
             </div>
-            <div class="metric-box">
-                <h4>Detection Rate</h4>
-                <p>Percentage of stress events where the indicator exceeded the 70th percentile.</p>
-                <p class="metric-note">Higher is better. 100% means the indicator caught every major stress event.</p>
+            <div class="section-box">
+                <h4 style="color: #f1f5f9; margin-bottom: 0.5rem;">Detection Rate</h4>
+                <p style="color: #94a3b8; font-size: 0.85rem;">% of stress events where indicator exceeded 70th percentile.</p>
+                <p style="color: #10b981; font-size: 0.85rem; margin-top: 0.5rem;">Higher is better. 100% = caught every major event.</p>
             </div>
         </div>
         
         <h3 class="section-title">Indicator Rankings</h3>
         <table class="rankings-table">
-            <thead>
-                <tr>
-                    <th>Indicator</th>
-                    <th>Signal Ratio</th>
-                    <th>Detection</th>
-                    <th>Tier</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Indicator</th><th>Signal Ratio</th><th>Detection</th><th>Tier</th></tr></thead>
             <tbody>
                 <tr><td>HY Credit Spread</td><td>2.19x</td><td>100%</td><td>1</td></tr>
                 <tr><td>BBB Credit Spread</td><td>2.18x</td><td>100%</td><td>1</td></tr>
@@ -187,30 +191,86 @@ def build_backtest_tab() -> str:
         </table>
         
         <h3 class="section-title">What Didn\'t Work</h3>
-        <table class="rankings-table failed-table">
-            <thead>
-                <tr>
-                    <th>Indicator</th>
-                    <th>Signal Ratio</th>
-                    <th>Problem</th>
-                </tr>
-            </thead>
+        <table class="rankings-table">
+            <thead><tr><th>Indicator</th><th>Signal Ratio</th><th>Problem</th></tr></thead>
             <tbody>
-                <tr><td class="failed">RSI (SPY, QQQ, IWM)</td><td class="failed">0.53-0.58x</td><td>Goes DOWN during stress (inverted signal)</td></tr>
-                <tr><td class="failed">10Y-2Y Spread</td><td class="failed">0.61x</td><td>Only 33% detection rate - too slow</td></tr>
-                <tr><td class="failed">SKEW Index</td><td class="failed">0.22x</td><td>Opposite of expected behavior</td></tr>
-                <tr><td class="warning">Fed Funds Rate</td><td class="warning">1.02x</td><td>Policy-driven, not market-driven</td></tr>
+                <tr><td class="failed">RSI (SPY, QQQ, IWM)</td><td class="failed">0.53-0.58x</td><td>Goes DOWN during stress</td></tr>
+                <tr><td class="failed">10Y-2Y Spread</td><td class="failed">0.61x</td><td>Only 33% detection - too slow</td></tr>
+                <tr><td class="failed">SKEW Index</td><td class="failed">0.22x</td><td>Opposite of expected</td></tr>
+                <tr><td class="warning">Fed Funds Rate</td><td class="warning">1.02x</td><td>Policy-driven, not market</td></tr>
+            </tbody>
+        </table>
+    '''
+
+
+def build_models_tab() -> str:
+    """Build the Models (non-linear analysis) tab HTML."""
+    return '''
+        <h2 class="tab-heading">Linear vs Non-Linear Models</h2>
+        <p class="tab-intro">Testing whether non-linear relationships improve fast market detection.</p>
+        
+        <div class="section-box">
+            <h4 style="color: #ef4444; margin-bottom: 0.75rem;">What Linear Models Miss</h4>
+            <ul style="color: #94a3b8; padding-left: 1.25rem;">
+                <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Convexity at extremes</strong> - Going from 70th to 85th percentile is fundamentally different than 40th to 55th.</li>
+                <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Convergence effects</strong> - When VIX, credit, and USD all spike together, it\'s multiplicative, not additive.</li>
+                <li style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">Regime shifts</strong> - In calm markets, credit leads. In stress, everything correlates.</li>
+                <li><strong style="color: #e2e8f0;">Lead-lag relationships</strong> - Credit spreads widen before equities fall.</li>
+            </ul>
+        </div>
+        
+        <h3 class="section-title">Backtest Results: 6 Major Stress Events</h3>
+        <table class="rankings-table">
+            <thead><tr><th>Event</th><th>Linear</th><th>Hybrid</th></tr></thead>
+            <tbody>
+                <tr><td>Financial Crisis (2008)</td><td>72</td><td style="color: #10b981;">95</td></tr>
+                <tr><td>Debt Ceiling (2011)</td><td>72</td><td style="color: #10b981;">95</td></tr>
+                <tr><td>China Devaluation (2015)</td><td>72</td><td style="color: #10b981;">95</td></tr>
+                <tr><td>Fed Tightening (2018)</td><td>71</td><td style="color: #10b981;">93</td></tr>
+                <tr><td>COVID Crash (2020)</td><td>73</td><td style="color: #10b981;">95</td></tr>
+                <tr><td>Rate Shock (2022)</td><td>72</td><td style="color: #10b981;">99</td></tr>
             </tbody>
         </table>
         
-        <h3 class="section-title">Weighting Rationale</h3>
-        <div class="rationale-box">
-            <p>Weights are assigned based on three factors:</p>
-            <ol>
-                <li><strong>Signal Ratio</strong> - Higher signal ratios (indicator more elevated during stress) get more weight. Credit spreads (2.18-2.19x) outperformed VIX (1.89x) in distinguishing stress from normal.</li>
-                <li><strong>Detection Rate</strong> - Must catch 100% of major stress events to be included. Curve inversion (33% detection) was excluded despite theoretical importance.</li>
-                <li><strong>Independence</strong> - Indicators measuring different risk dimensions get priority. VIX (fear), credit (default risk), and USD (flight to safety) capture distinct signals.</li>
-            </ol>
+        <h3 class="section-title">Model Performance</h3>
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div class="metric-label">Signal Ratio</div>
+                <div class="metric-value" style="color: #3b82f6;">+24%</div>
+                <div class="metric-sublabel">Hybrid vs Linear</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Peak Score</div>
+                <div class="metric-value" style="color: #10b981;">95-99</div>
+                <div class="metric-sublabel">Hybrid in stress</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Lead Time</div>
+                <div class="metric-value" style="color: #f59e0b;">+0.8d</div>
+                <div class="metric-sublabel">Early warning</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Precision</div>
+                <div class="metric-value" style="color: #ef4444;">-28%</div>
+                <div class="metric-sublabel">More false positives</div>
+            </div>
+        </div>
+        
+        <h3 class="section-title">Practical Recommendation</h3>
+        <div class="section-box" style="background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%); border-color: #3b82f6;">
+            <h4 style="color: #f1f5f9; margin-bottom: 1rem;">Two-Stage Monitoring Approach</h4>
+            <div class="stage-row">
+                <span class="stage-badge" style="background: #10b981;">STAGE 1</span>
+                <span class="stage-text">Use <strong>Linear model</strong> for daily monitoring. Fewer false alarms, stable baseline.</span>
+            </div>
+            <div class="stage-row">
+                <span class="stage-badge" style="background: #f59e0b;">STAGE 2</span>
+                <span class="stage-text">When Linear crosses <strong>50+</strong>, switch to <strong>Hybrid lens</strong> for amplified signal.</span>
+            </div>
+            <div class="stage-row">
+                <span class="stage-badge" style="background: #ef4444;">STAGE 3</span>
+                <span class="stage-text">If Hybrid exceeds <strong>85</strong>, treat as confirmed fast market.</span>
+            </div>
         </div>
     '''
 
@@ -240,8 +300,8 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     if result is None:
         raise ValueError("No data available. Run the FRED fetcher first.")
     
-    # Get history for chart
-    history = calculator.get_history(days=90)
+    # Get history for chart (get 1 year for period selector options)
+    history = calculator.get_history(days=365)
     
     # Calculate 5-day delta
     if not history.empty and len(history) >= 5:
@@ -256,7 +316,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     else:
         delta_str, delta_color = "N/A", "#6b7280"
     
-    # Prepare chart data
+    # Prepare chart data (full year)
     chart_dates = []
     chart_values = []
     if not history.empty:
@@ -269,7 +329,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     # Build signal breakdown rows
     sorted_indicators = sorted(
         [(k, v, WEIGHTS.get(k, 0)) for k, v in result.indicators.items()],
-        key=lambda x: x[1].percentile * x[2],
+        key=lambda x: x[1].percentile,
         reverse=True,
     )
     
@@ -323,13 +383,17 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     # Build tab content
     indicators_tab = build_indicators_tab(result)
     backtest_tab = build_backtest_tab()
+    models_tab = build_models_tab()
+    
+    # Market events as JSON for JavaScript
+    market_events_json = json.dumps(MARKET_EVENTS)
     
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Market Dashboard Testing</title>
+    <title>Fast Market Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -346,7 +410,6 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         
         .container {{ max-width: 1400px; margin: 0 auto; }}
         
-        /* Header */
         .header {{
             display: flex;
             justify-content: space-between;
@@ -358,6 +421,25 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         .header-title {{ font-size: 1.5rem; font-weight: 600; color: #f1f5f9; }}
         .header-subtitle {{ color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }}
         .header-meta {{ color: #64748b; font-size: 0.7rem; text-align: right; }}
+        
+        /* Period Selector */
+        .period-selector {{
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }}
+        .period-selector label {{ color: #94a3b8; font-size: 0.8rem; }}
+        .period-select {{
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }}
+        .period-select:focus {{ outline: none; border-color: #3b82f6; }}
         
         /* Tabs */
         .tabs {{
@@ -397,25 +479,49 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         .regime-delta {{ font-size: 1.25rem; color: {delta_color}; font-family: 'SF Mono', 'Consolas', monospace; }}
         .regime-badge {{ background: {regime['color']}22; border: 1px solid {regime['color']}; color: {regime['color']}; padding: 0.5rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 1.1rem; }}
         .regime-action {{ color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; text-align: right; }}
-        .regime-footer {{ color: #64748b; font-size: 0.7rem; margin-bottom: 1.5rem; }}
-        
-        /* Grid Layout */
-        .main-grid {{ display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }}
-        .bottom-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }}
-        @media (max-width: 1024px) {{ .main-grid, .bottom-grid {{ grid-template-columns: 1fr; }} }}
-        
-        /* Cards */
-        .card {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem 1.5rem; }}
-        .card-title {{ color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }}
-        
-        #chart {{ height: 280px; }}
+        .regime-footer {{ color: #64748b; font-size: 0.7rem; margin-bottom: 1rem; }}
         
         /* Alerts */
+        .alerts-container {{ margin-bottom: 1rem; }}
         .alert {{ border-radius: 4px; padding: 0.5rem 1rem; font-size: 0.8rem; margin-bottom: 0.5rem; }}
         .alert-ok {{ background: #10b98122; border: 1px solid #10b981; color: #6ee7b7; }}
         .alert-high {{ background: #ef444422; border: 1px solid #ef4444; color: #fca5a5; }}
         .alert-elevated {{ background: #f9731622; border: 1px solid #f97316; color: #fdba74; }}
         .alert-level {{ font-weight: 600; }}
+        
+        /* Chart */
+        .chart-container {{ margin-bottom: 1rem; }}
+        #chart {{ height: 350px; }}
+        
+        /* Event Legend */
+        .event-legend {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0.5rem 0;
+            border-top: 1px solid #334155;
+            margin-bottom: 1.5rem;
+        }}
+        .event-item {{
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }}
+        .event-bar {{
+            width: 3px;
+            height: 14px;
+            border-radius: 1px;
+        }}
+        .event-date {{ color: #94a3b8; font-size: 0.75rem; }}
+        .event-label {{ color: #e2e8f0; font-size: 0.75rem; }}
+        
+        /* Bottom Grid */
+        .bottom-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }}
+        @media (max-width: 1024px) {{ .bottom-grid {{ grid-template-columns: 1fr; }} }}
+        
+        /* Cards */
+        .card {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem 1.5rem; }}
+        .card-title {{ color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }}
         
         /* Signal Breakdown */
         .signal-row {{ margin-bottom: 0.75rem; }}
@@ -449,30 +555,28 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         .indicator-detail-value {{ color: #e2e8f0; font-size: 0.85rem; }}
         @media (max-width: 768px) {{ .indicator-details {{ grid-template-columns: 1fr; }} }}
         
-        /* Backtest Tab */
-        .backtest-section {{ margin-bottom: 2rem; }}
-        .backtest-section h3 {{ color: #f1f5f9; font-size: 1.1rem; margin-bottom: 0.75rem; }}
-        .backtest-section p {{ color: #94a3b8; margin-bottom: 0.5rem; }}
-        .stress-events {{ color: #94a3b8; margin-left: 1.25rem; margin-top: 0.5rem; }}
-        .stress-events li {{ margin-bottom: 0.25rem; }}
-        .metrics-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }}
-        .metric-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; }}
-        .metric-box h4 {{ color: #f1f5f9; margin-bottom: 0.5rem; }}
-        .metric-box p {{ color: #94a3b8; font-size: 0.85rem; margin: 0; }}
-        .metric-note {{ color: #10b981 !important; margin-top: 0.5rem !important; }}
+        /* Backtest & Models Tabs */
+        .section-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; }}
         .section-title {{ color: #f1f5f9; font-size: 1.1rem; margin: 1.5rem 0 1rem 0; }}
+        .metrics-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }}
+        .metric-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; text-align: center; }}
+        .metric-value {{ font-size: 1.5rem; font-weight: 600; margin: 0.25rem 0; }}
+        .metric-label {{ color: #64748b; font-size: 0.7rem; text-transform: uppercase; }}
+        .metric-sublabel {{ color: #94a3b8; font-size: 0.75rem; }}
         .rankings-table {{ width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }}
         .rankings-table th {{ text-align: left; padding: 0.75rem 1rem; color: #94a3b8; font-size: 0.8rem; border-bottom: 1px solid #334155; }}
         .rankings-table td {{ padding: 0.75rem 1rem; color: #e2e8f0; font-size: 0.85rem; border-bottom: 1px solid #334155; }}
         .rankings-table tr:last-child td {{ border-bottom: none; }}
+        .stress-events {{ color: #94a3b8; margin-left: 1.25rem; margin-top: 0.5rem; }}
+        .stress-events li {{ margin-bottom: 0.25rem; }}
         .failed {{ color: #ef4444 !important; }}
         .warning {{ color: #f59e0b !important; }}
-        .rationale-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem 1.5rem; }}
-        .rationale-box p {{ color: #94a3b8; margin-bottom: 0.75rem; }}
-        .rationale-box ol {{ color: #94a3b8; margin-left: 1.25rem; }}
-        .rationale-box li {{ margin-bottom: 0.5rem; }}
-        .rationale-box strong {{ color: #e2e8f0; }}
-        @media (max-width: 768px) {{ .metrics-grid {{ grid-template-columns: 1fr; }} }}
+        
+        /* Stage boxes */
+        .stage-row {{ display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }}
+        .stage-badge {{ padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem; color: white; white-space: nowrap; }}
+        .stage-text {{ color: #94a3b8; font-size: 0.9rem; }}
+        .stage-text strong {{ color: #e2e8f0; }}
         
         /* Login overlay */
         .login-overlay {{ position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 1000; }}
@@ -493,7 +597,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     {"" if not password_hash else '''
     <div id="loginOverlay" class="login-overlay">
         <div class="login-box">
-            <div class="login-title">Fast Market Dashboard Testing</div>
+            <div class="login-title">Fast Market Dashboard</div>
             <div class="login-subtitle">Enter password to continue</div>
             <input type="password" id="passwordInput" class="login-input" placeholder="Password" autofocus>
             <button id="loginButton" class="login-button">Access Dashboard</button>
@@ -512,10 +616,20 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             <div class="header-meta">Data: FRED + Yahoo Finance<br>Refresh: Daily EOD</div>
         </div>
         
+        <div class="period-selector">
+            <label>History Period:</label>
+            <select class="period-select" id="periodSelect">
+                <option value="90">90 Days</option>
+                <option value="180">180 Days</option>
+                <option value="365" selected>1 Year</option>
+            </select>
+        </div>
+        
         <div class="tabs">
             <div class="tab active" data-tab="dashboard">Dashboard</div>
             <div class="tab" data-tab="indicators">Indicators</div>
             <div class="tab" data-tab="backtest">Backtest</div>
+            <div class="tab" data-tab="models">Models</div>
         </div>
         
         <!-- Dashboard Tab -->
@@ -535,16 +649,15 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             </div>
             <div class="regime-footer">As of {result.as_of_date.strftime('%Y-%m-%d')} | Updated {datetime.now().strftime('%H:%M')}</div>
             
-            <div class="main-grid">
-                <div class="card">
-                    <div class="card-title">90-Day Composite History</div>
-                    <div id="chart"></div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Alerts</div>
-                    {alert_html}
-                </div>
+            <div class="alerts-container">
+                {alert_html}
             </div>
+            
+            <div class="chart-container">
+                <div id="chart"></div>
+            </div>
+            
+            <div class="event-legend" id="eventLegend"></div>
             
             <div class="bottom-grid">
                 <div class="card">
@@ -567,10 +680,24 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
         <div class="tab-content" id="tab-backtest">
             {backtest_tab}
         </div>
+        
+        <!-- Models Tab -->
+        <div class="tab-content" id="tab-models">
+            {models_tab}
+        </div>
     </div>
     </div>
     
     <script>
+        // Market Events
+        const MARKET_EVENTS = {market_events_json};
+        
+        // Chart data
+        const CHART_DATA = {{
+            dates: {json.dumps(chart_dates)},
+            values: {json.dumps(chart_values)}
+        }};
+        
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {{
             tab.addEventListener('click', () => {{
@@ -581,24 +708,24 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             }});
         }});
         
-        // Chart
-        const dates = {json.dumps(chart_dates)};
-        const values = {json.dumps(chart_values)};
+        // Period selector
+        document.getElementById('periodSelect').addEventListener('change', (e) => {{
+            renderChart(parseInt(e.target.value));
+        }});
         
-        const trace = {{
-            x: dates, y: values,
-            type: 'scatter', mode: 'lines',
-            line: {{ color: '#3b82f6', width: 2 }},
-            fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)',
-            hovertemplate: '%{{x|%b %d, %Y}}<br>Score: %{{y:.1f}}<extra></extra>',
-        }};
-        
-        const layout = {{
-            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-            margin: {{ t: 10, r: 10, b: 40, l: 40 }},
-            xaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, tickformat: '%b %d' }},
-            yaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, range: [0, 100], dtick: 25 }},
-            shapes: [
+        function renderChart(days) {{
+            const endIdx = CHART_DATA.dates.length;
+            const startIdx = Math.max(0, endIdx - days);
+            const dates = CHART_DATA.dates.slice(startIdx);
+            const values = CHART_DATA.values.slice(startIdx);
+            
+            // Filter events for this period
+            const startDate = dates[0];
+            const endDate = dates[dates.length - 1];
+            const visibleEvents = MARKET_EVENTS.filter(e => e.date >= startDate && e.date <= endDate);
+            
+            // Build shapes for regime bands and event lines
+            const shapes = [
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#10b981', opacity: 0.08, line: {{ width: 0 }} }},
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#f59e0b', opacity: 0.08, line: {{ width: 0 }} }},
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#f97316', opacity: 0.08, line: {{ width: 0 }} }},
@@ -606,11 +733,50 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
                 {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
                 {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 50, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
                 {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 70, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
-            ],
-            hovermode: 'x unified',
-        }};
+            ];
+            
+            visibleEvents.forEach(e => {{
+                shapes.push({{
+                    type: 'line', x0: e.date, x1: e.date, y0: 0, y1: 100,
+                    line: {{ color: e.color, width: 1.5, dash: 'dash' }}
+                }});
+            }});
+            
+            const trace = {{
+                x: dates, y: values,
+                type: 'scatter', mode: 'lines',
+                line: {{ color: '#3b82f6', width: 2 }},
+                fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)',
+                name: 'Stress Score',
+                hovertemplate: '%{{x|%b %d, %Y}}<br>Score: %{{y:.1f}}<extra></extra>',
+            }};
+            
+            const layout = {{
+                paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+                margin: {{ t: 10, r: 50, b: 40, l: 40 }},
+                xaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, tickformat: '%b %d' }},
+                yaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, range: [0, 100], dtick: 25 }},
+                shapes: shapes,
+                hovermode: 'x unified',
+                showlegend: false,
+            }};
+            
+            Plotly.newPlot('chart', [trace], layout, {{ displayModeBar: false, responsive: true }});
+            
+            // Update event legend
+            const legendEl = document.getElementById('eventLegend');
+            if (visibleEvents.length > 0) {{
+                legendEl.innerHTML = visibleEvents.map(e => {{
+                    const dateStr = new Date(e.date).toLocaleDateString('en-US', {{ month: 'short', day: 'numeric' }});
+                    return '<div class="event-item"><div class="event-bar" style="background: ' + e.color + ';"></div><span class="event-date">' + dateStr + '</span><span class="event-label">' + e.label + '</span></div>';
+                }}).join('');
+            }} else {{
+                legendEl.innerHTML = '';
+            }}
+        }}
         
-        Plotly.newPlot('chart', [trace], layout, {{ displayModeBar: false, responsive: true }});
+        // Initialize chart
+        renderChart(365);
     </script>
     {"" if not password_hash else f'''
     <script>
