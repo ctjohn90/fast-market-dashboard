@@ -34,18 +34,19 @@ class CompositeResult:
 # Weights based on backtest signal ratios and detection rates
 WEIGHTS = {
     # Tier 1: Credit spreads (best discriminators, 2.1-2.2x ratio)
-    "hy_credit": 0.20,           # 2.19x ratio, 100% detection
-    "bbb_credit": 0.15,          # 2.18x ratio, 100% detection
+    "hy_credit": 0.18,           # 2.20x ratio, 100% detection
+    "ig_credit": 0.12,           # 2.15x ratio, 100% detection (NEW)
+    "bbb_credit": 0.10,          # 2.18x ratio, 100% detection
     # Tier 2: Volatility & Flight (1.7-1.9x ratio)
-    "volatility": 0.15,          # 1.89x ratio, 100% detection
-    "defensive_rotation": 0.10,  # 1.89x ratio, 100% detection (NEW)
-    "usd_flight": 0.10,          # 1.73x ratio, 100% detection
+    "volatility": 0.15,          # 1.90x ratio, 100% detection
+    "defensive_rotation": 0.08,  # 1.90x ratio, 100% detection
+    "usd_flight": 0.08,          # 1.72x ratio, 100% detection
     # Tier 3: Market structure (1.6-1.8x ratio)
-    "sector_correlation": 0.10,  # 1.75x ratio, unique signal
-    "vix_term_structure": 0.10,  # 1.63x ratio, panic indicator
+    "sector_correlation": 0.08,  # 1.76x ratio, unique signal
+    "vix_term_structure": 0.08,  # 1.67x ratio, panic indicator
     # Tier 4: Supporting indicators
-    "safe_haven": 0.05,          # 1.38x ratio
-    "equity_drawdown": 0.05,     # Direct measure
+    "safe_haven": 0.05,          # 1.42x ratio
+    "equity_drawdown": 0.08,     # Direct measure, confirms stress
 }
 
 # Indicator metadata for dashboard descriptions
@@ -55,9 +56,18 @@ INDICATOR_INFO = {
         "source": "FRED (BAMLH0A0HYM2)",
         "description": "The spread between high yield (junk) bonds and treasuries. Widens sharply during stress as investors demand more compensation for risk.",
         "interpretation": "Higher = more stress. During crises, spreads can exceed 10%. Normal range is 3-5%.",
-        "signal_ratio": "2.19x",
-        "detection_rate": "100% (6/6 events)",
+        "signal_ratio": "2.20x",
+        "detection_rate": "100% (7/7 events)",
         "weight_rationale": "Highest signal ratio. Credit markets often lead equities in signaling stress.",
+    },
+    "ig_credit": {
+        "name": "Investment Grade Credit Spread",
+        "source": "FRED (BAMLC0A0CM)",
+        "description": "Option-adjusted spread for investment grade corporate bonds vs treasuries. Broader measure of corporate credit stress than BBB alone.",
+        "interpretation": "Higher = more stress. IG spreads widen when investors flee corporate bonds for safer assets.",
+        "signal_ratio": "2.15x",
+        "detection_rate": "100% (7/7 events)",
+        "weight_rationale": "Third-highest signal ratio. Captures broad investment grade credit stress.",
     },
     "bbb_credit": {
         "name": "BBB Credit Spread",
@@ -65,16 +75,16 @@ INDICATOR_INFO = {
         "description": "Spread for BBB-rated corporate bonds (lowest investment grade). Sensitive to downgrade fears.",
         "interpretation": "Higher = more stress. BBB is the largest segment of corporate debt.",
         "signal_ratio": "2.18x",
-        "detection_rate": "100% (6/6 events)",
-        "weight_rationale": "Second-highest signal ratio. Captures IG downgrade risk during stress.",
+        "detection_rate": "100% (7/7 events)",
+        "weight_rationale": "Captures IG downgrade risk during stress. BBB is 'fallen angel' risk zone.",
     },
     "volatility": {
         "name": "VIX (Volatility Index)",
         "source": "FRED (VIXCLS)",
         "description": "The 'fear gauge' - measures expected 30-day S&P 500 volatility implied by options prices.",
         "interpretation": "Higher = more fear. Above 30 is elevated, above 40 is panic.",
-        "signal_ratio": "1.89x",
-        "detection_rate": "100% (6/6 events)",
+        "signal_ratio": "1.90x",
+        "detection_rate": "100% (7/7 events)",
         "weight_rationale": "Industry-standard fear gauge. Fast-reacting and universally recognized.",
     },
     "defensive_rotation": {
@@ -82,8 +92,8 @@ INDICATOR_INFO = {
         "source": "Yahoo Finance (derived)",
         "description": "Ratio of Utilities (defensive) to Consumer Discretionary (cyclical). Rising ratio indicates rotation to safety.",
         "interpretation": "Higher = more defensive positioning. Spikes during risk-off periods.",
-        "signal_ratio": "1.89x",
-        "detection_rate": "100%",
+        "signal_ratio": "1.90x",
+        "detection_rate": "100% (2/2 events)",
         "weight_rationale": "Captures sector rotation behavior distinct from VIX or credit.",
     },
     "usd_flight": {
@@ -91,8 +101,8 @@ INDICATOR_INFO = {
         "source": "FRED (DTWEXBGS)",
         "description": "Trade-weighted US dollar index. Dollar strengthens as global reserve currency during crises.",
         "interpretation": "Higher = flight to safety. Strong dollar can also create EM stress.",
-        "signal_ratio": "1.73x",
-        "detection_rate": "100% (6/6 events)",
+        "signal_ratio": "1.72x",
+        "detection_rate": "100% (7/7 events)",
         "weight_rationale": "Independent macro signal. Flight to USD is a global risk-off indicator.",
     },
     "sector_correlation": {
@@ -100,8 +110,8 @@ INDICATOR_INFO = {
         "source": "Yahoo Finance (derived)",
         "description": "Average pairwise correlation of S&P sector ETFs (60-day rolling). High correlation means diversification breaks down.",
         "interpretation": "Higher = more stress. When all sectors move together, it signals panic selling.",
-        "signal_ratio": "1.75x",
-        "detection_rate": "100%",
+        "signal_ratio": "1.76x",
+        "detection_rate": "100% (2/2 events)",
         "weight_rationale": "Unique signal: diversification breakdown during panic.",
     },
     "vix_term_structure": {
@@ -109,8 +119,8 @@ INDICATOR_INFO = {
         "source": "Yahoo Finance (VIX/VIX3M)",
         "description": "Ratio of spot VIX to 3-month VIX. Normally in contango (>1). Backwardation (<1) signals panic.",
         "interpretation": "Below 1.0 = backwardation = panic. Below 0.9 = severe stress.",
-        "signal_ratio": "1.63x",
-        "detection_rate": "100%",
+        "signal_ratio": "1.67x",
+        "detection_rate": "100% (2/2 events)",
         "weight_rationale": "Complements VIX level. Backwardation signals extreme near-term fear.",
     },
     "safe_haven": {
@@ -118,8 +128,8 @@ INDICATOR_INFO = {
         "source": "Yahoo Finance (derived)",
         "description": "Ratio of gold to S&P 500. Rising ratio indicates flight to gold as safe haven.",
         "interpretation": "Higher = more fear. Gold outperforms equities during stress.",
-        "signal_ratio": "1.38x",
-        "detection_rate": "100%",
+        "signal_ratio": "1.42x",
+        "detection_rate": "100% (2/2 events)",
         "weight_rationale": "Lower weight due to weaker signal ratio. Gold not always a stress indicator.",
     },
     "equity_drawdown": {
@@ -254,6 +264,10 @@ class IndicatorCalculator:
         vix = self._get_indicator("VIXCLS", "VIX", "percentile")
         if vix:
             indicators["volatility"] = vix
+
+        ig = self._get_indicator("BAMLC0A0CM", "IG Credit Spread", "percentile")
+        if ig:
+            indicators["ig_credit"] = ig
 
         bbb = self._get_indicator("BAMLC0A4CBBB", "BBB Credit Spread", "percentile")
         if bbb:
