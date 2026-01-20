@@ -72,20 +72,32 @@ class LargeMoveForecaster:
     """
     
     THRESHOLD = 0.03  # 3% move threshold
-    PREDICTION_THRESHOLD = 0.25  # Lower threshold for rare events (default 0.5)
+    PREDICTION_THRESHOLD = 0.15  # Lower threshold for rare events (default 0.5)
     
     # Feature definitions: series_id -> (name, transform)
     # Transform: 'raw' = use raw value, 'pct' = percentile rank
     FEATURES = {
+        # Core stress indicators (from FRED)
         "BAMLH0A0HYM2": ("hy_spread", "raw"),
         "BAMLC0A0CM": ("ig_spread", "raw"),
         "VIXCLS": ("vix", "raw"),
         "DTWEXBGS": ("usd", "raw"),
         "SP500": ("sp500_level", "raw"),
+        # Derived indicators (from Yahoo)
         "VIX_TERM_STRUCTURE": ("vix_term", "raw"),
         "SECTOR_CORRELATION": ("sector_corr", "raw"),
         "DEFENSIVE_ROTATION": ("defensive", "raw"),
         "SAFE_HAVEN": ("safe_haven", "raw"),
+        # NEW: Enhanced forecast features
+        "VVIX_LEVEL": ("vvix", "raw"),                    # Volatility of VIX
+        "BOND_VOLATILITY": ("bond_vol", "raw"),           # TLT vol (MOVE proxy)
+        "SPY_REL_VOLUME": ("rel_volume", "raw"),          # Relative volume
+        "CREDIT_APPETITE_MOM": ("credit_mom", "raw"),     # HYG/LQD momentum
+        "SMALLCAP_APPETITE_MOM": ("smallcap_mom", "raw"), # IWM/SPY momentum
+        "YEN_CARRY_SIGNAL": ("yen_carry", "raw"),         # Carry trade unwinding
+        "OIL_STRESS": ("oil_stress", "raw"),              # Oil 5-day return
+        "VIX_MOMENTUM": ("vix_mom", "raw"),               # VIX rate of change
+        "SPREAD_ACCELERATION": ("spread_accel", "raw"),   # Credit spread 2nd derivative
     }
     
     def __init__(self, settings: Settings | None = None) -> None:
@@ -188,6 +200,28 @@ class LargeMoveForecaster:
         lagged["hy_spread_5d_change"] = combined["hy_spread"].pct_change(5).shift(1) if "hy_spread" in combined.columns else np.nan
         lagged["sp500_5d_return"] = combined["sp500_level"].pct_change(5).shift(1) if "sp500_level" in combined.columns else np.nan
         lagged["sp500_20d_vol"] = combined["sp500_return"].rolling(20).std().shift(1) * np.sqrt(252)  # Annualized vol
+        
+        # NEW: Additional rolling statistics for enhanced features
+        if "vvix" in combined.columns:
+            lagged["vvix_5d_change"] = combined["vvix"].pct_change(5).shift(1)
+            lagged["vvix_vs_vix"] = (combined["vvix"] / combined["vix"]).shift(1) if "vix" in combined.columns else np.nan
+        
+        if "bond_vol" in combined.columns:
+            lagged["bond_vol_5d_change"] = combined["bond_vol"].pct_change(5).shift(1)
+        
+        if "rel_volume" in combined.columns:
+            lagged["volume_surge"] = (combined["rel_volume"] > 2.0).astype(int).shift(1)  # Binary: volume > 2x average
+        
+        # Cross-asset stress indicator: count of elevated signals
+        stress_cols = ["vix", "hy_spread", "vvix", "bond_vol"]
+        available_stress = [c for c in stress_cols if c in combined.columns]
+        if len(available_stress) >= 2:
+            # Count how many stress indicators are above their 75th percentile
+            stress_count = pd.DataFrame()
+            for col in available_stress:
+                pct75 = combined[col].rolling(252).quantile(0.75)
+                stress_count[col] = (combined[col] > pct75).astype(int)
+            lagged["stress_count"] = stress_count.sum(axis=1).shift(1)
         
         # Keep target (not lagged - this is what we're predicting)
         lagged["sp500_return"] = combined["sp500_return"]

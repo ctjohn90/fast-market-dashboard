@@ -17,9 +17,10 @@ logger = logging.getLogger(__name__)
 
 # Yahoo Finance tickers to fetch
 YAHOO_TICKERS: dict[str, str] = {
-    # VIX Term Structure
+    # VIX Term Structure & Volatility
     "^VIX": "VIX Spot",
     "^VIX3M": "VIX 3-Month",
+    "^VVIX": "VVIX (Volatility of VIX)",
     # Equity indices
     "SPY": "S&P 500 ETF",
     "IWM": "Russell 2000 ETF",
@@ -36,7 +37,7 @@ YAHOO_TICKERS: dict[str, str] = {
     "XLU": "Utilities",
     "XLY": "Consumer Discretionary",
     "XLP": "Consumer Staples",
-    # Safe haven
+    # Safe haven & bonds
     "GLD": "Gold ETF",
     "TLT": "20+ Year Treasury ETF",
     "UUP": "US Dollar ETF",
@@ -44,6 +45,10 @@ YAHOO_TICKERS: dict[str, str] = {
     "EEM": "Emerging Markets ETF",
     "FXI": "China Large Cap ETF",
     "EFA": "Developed Markets ETF",
+    # Currency (carry trade)
+    "FXY": "Japanese Yen ETF",
+    # Commodities
+    "USO": "US Oil ETF",
     # Volatility
     "^SKEW": "SKEW Index",
 }
@@ -305,6 +310,125 @@ class YahooFetcher:
                 self.cache.store_observations("TECH_VS_STAPLES", df, fetched_at)
                 derived["TECH_VS_STAPLES"] = df
                 logger.info(f"  Tech vs Staples (XLK/XLP): {len(ratio)} obs")
+
+        # ========== NEW FORECAST FEATURES ==========
+
+        # VVIX (Volatility of VIX) - leading indicator of big moves
+        vvix = self.cache.get_series("YF_VVIX")
+        if not vvix.empty:
+            df = pd.DataFrame({"value": vvix["value"]})
+            self.cache.store_observations("VVIX_LEVEL", df, fetched_at)
+            derived["VVIX_LEVEL"] = df
+            logger.info(f"  VVIX Level: {len(df)} obs, current={df['value'].iloc[-1]:.1f}")
+
+        # TLT Realized Volatility (MOVE Index proxy)
+        # 20-day annualized volatility of long treasury ETF
+        tlt = self.cache.get_series("YF_TLT")
+        if not tlt.empty and len(tlt) > 20:
+            tlt_returns = tlt["value"].pct_change()
+            tlt_vol = tlt_returns.rolling(20).std() * np.sqrt(252) * 100
+            tlt_vol = tlt_vol.dropna()
+            if not tlt_vol.empty:
+                df = pd.DataFrame({"value": tlt_vol})
+                self.cache.store_observations("BOND_VOLATILITY", df, fetched_at)
+                derived["BOND_VOLATILITY"] = df
+                logger.info(f"  Bond Volatility (TLT): {len(df)} obs, current={tlt_vol.iloc[-1]:.1f}%")
+
+        # SPY Relative Volume (liquidity/conviction signal)
+        # Current volume vs 20-day average
+        spy = self.cache.get_series("YF_SPY")
+        if not spy.empty:
+            try:
+                spy_data = yf.download("SPY", period="2y", progress=False)
+                if not spy_data.empty and "Volume" in spy_data.columns:
+                    vol = spy_data["Volume"]
+                    vol_avg = vol.rolling(20).mean()
+                    rel_vol = vol / vol_avg
+                    rel_vol = rel_vol.dropna()
+                    if not rel_vol.empty:
+                        df = pd.DataFrame({"value": rel_vol})
+                        self.cache.store_observations("SPY_REL_VOLUME", df, fetched_at)
+                        derived["SPY_REL_VOLUME"] = df
+                        logger.info(f"  SPY Relative Volume: {len(df)} obs, current={rel_vol.iloc[-1]:.2f}x")
+            except Exception as e:
+                logger.warning(f"  SPY Volume fetch failed: {e}")
+
+        # Credit Risk Appetite (HYG/LQD momentum)
+        # 5-day change in junk vs investment grade ratio
+        if not hyg.empty and not lqd.empty:
+            aligned = pd.concat([hyg["value"], lqd["value"]], axis=1, keys=["hyg", "lqd"])
+            aligned = aligned.dropna()
+            if not aligned.empty:
+                ratio = aligned["hyg"] / aligned["lqd"]
+                ratio_momentum = ratio.pct_change(5) * 100  # 5-day % change
+                ratio_momentum = ratio_momentum.dropna()
+                if not ratio_momentum.empty:
+                    df = pd.DataFrame({"value": ratio_momentum})
+                    self.cache.store_observations("CREDIT_APPETITE_MOM", df, fetched_at)
+                    derived["CREDIT_APPETITE_MOM"] = df
+                    logger.info(f"  Credit Appetite Momentum: {len(df)} obs")
+
+        # Small Cap Risk Appetite Momentum (IWM/SPY momentum)
+        iwm = self.cache.get_series("YF_IWM")
+        if not iwm.empty and not spy.empty:
+            aligned = pd.concat([iwm["value"], spy["value"]], axis=1, keys=["iwm", "spy"])
+            aligned = aligned.dropna()
+            if not aligned.empty:
+                ratio = aligned["iwm"] / aligned["spy"]
+                ratio_momentum = ratio.pct_change(5) * 100
+                ratio_momentum = ratio_momentum.dropna()
+                if not ratio_momentum.empty:
+                    df = pd.DataFrame({"value": ratio_momentum})
+                    self.cache.store_observations("SMALLCAP_APPETITE_MOM", df, fetched_at)
+                    derived["SMALLCAP_APPETITE_MOM"] = df
+                    logger.info(f"  Small Cap Appetite Momentum: {len(df)} obs")
+
+        # Yen Carry Signal (FXY change)
+        # Rising yen = carry trade unwinding = risk-off
+        fxy = self.cache.get_series("YF_FXY")
+        if not fxy.empty:
+            fxy_change = fxy["value"].pct_change(5) * 100  # 5-day change
+            fxy_change = fxy_change.dropna()
+            if not fxy_change.empty:
+                df = pd.DataFrame({"value": fxy_change})
+                self.cache.store_observations("YEN_CARRY_SIGNAL", df, fetched_at)
+                derived["YEN_CARRY_SIGNAL"] = df
+                logger.info(f"  Yen Carry Signal: {len(df)} obs")
+
+        # Oil Stress (USO 5-day return)
+        # Large moves in oil often precede equity volatility
+        uso = self.cache.get_series("YF_USO")
+        if not uso.empty:
+            uso_ret = uso["value"].pct_change(5) * 100
+            uso_ret = uso_ret.dropna()
+            if not uso_ret.empty:
+                df = pd.DataFrame({"value": uso_ret})
+                self.cache.store_observations("OIL_STRESS", df, fetched_at)
+                derived["OIL_STRESS"] = df
+                logger.info(f"  Oil Stress (USO 5d return): {len(df)} obs")
+
+        # VIX Rate of Change (momentum)
+        if not vix.empty:
+            vix_roc = vix["value"].pct_change(5) * 100
+            vix_roc = vix_roc.dropna()
+            if not vix_roc.empty:
+                df = pd.DataFrame({"value": vix_roc})
+                self.cache.store_observations("VIX_MOMENTUM", df, fetched_at)
+                derived["VIX_MOMENTUM"] = df
+                logger.info(f"  VIX Momentum (5d ROC): {len(df)} obs")
+
+        # Spread Acceleration (2nd derivative of HY spread proxy)
+        # Uses HYG inverse as spread proxy
+        if not hyg.empty:
+            spread_proxy = 1 / hyg["value"]  # Inverse of price = proxy for spread
+            spread_change = spread_proxy.pct_change(5)
+            spread_accel = spread_change.diff(5)  # 2nd derivative
+            spread_accel = spread_accel.dropna()
+            if not spread_accel.empty:
+                df = pd.DataFrame({"value": spread_accel})
+                self.cache.store_observations("SPREAD_ACCELERATION", df, fetched_at)
+                derived["SPREAD_ACCELERATION"] = df
+                logger.info(f"  Spread Acceleration: {len(df)} obs")
 
         return derived
 
