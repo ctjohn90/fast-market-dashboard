@@ -408,7 +408,11 @@ class IndicatorCalculator:
                         total_weight += weight
                 if total_weight > 0:
                     composite = composite / total_weight * sum(WEIGHTS.values())
-                results.append({"date": row_date, "composite": composite})
+                
+                # Include individual scores for non-linear analysis
+                row_data = {"date": row_date, "composite": composite}
+                row_data.update(scores)
+                results.append(row_data)
 
         if not results:
             return pd.DataFrame()

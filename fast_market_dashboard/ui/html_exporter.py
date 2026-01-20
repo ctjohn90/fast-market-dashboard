@@ -1,4 +1,4 @@
-"""Export dashboard as self-contained HTML."""
+"""Export dashboard as self-contained HTML with tabs."""
 
 import hashlib
 import json
@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fast_market_dashboard.config import Settings
-from fast_market_dashboard.indicators.calculator import IndicatorCalculator, WEIGHTS
+from fast_market_dashboard.indicators.calculator import IndicatorCalculator, WEIGHTS, INDICATOR_INFO
 
 
 def hash_password(password: str) -> str:
@@ -73,9 +73,151 @@ def generate_alerts(result, history) -> list[tuple[str, str]]:
     return alerts[:5]
 
 
+def build_indicators_tab(result) -> str:
+    """Build the Indicators reference tab HTML."""
+    cards = []
+    for key, info in INDICATOR_INFO.items():
+        weight = WEIGHTS.get(key, 0) * 100
+        current = result.indicators.get(key)
+        
+        if current:
+            pct = current.percentile
+            if pct >= 70:
+                status_color = "#ef4444"
+                status = "Elevated"
+            elif pct >= 50:
+                status_color = "#f59e0b"
+                status = "Normal"
+            else:
+                status_color = "#10b981"
+                status = "Low"
+            pct_display = f"{pct:.0f}"
+        else:
+            status_color = "#6b7280"
+            status = "No Data"
+            pct_display = "N/A"
+        
+        cards.append(f'''
+            <div class="indicator-card">
+                <div class="indicator-card-header">
+                    <div>
+                        <h3 class="indicator-card-title">{info['name']}</h3>
+                        <div class="indicator-card-source">{info['source']}</div>
+                    </div>
+                    <div class="indicator-card-status-wrap">
+                        <div class="indicator-status" style="background: {status_color}22; border-color: {status_color}; color: {status_color};">
+                            {status}: {pct_display}
+                        </div>
+                        <div class="indicator-weight">Weight: {weight:.0f}%</div>
+                    </div>
+                </div>
+                <p class="indicator-description">{info['description']}</p>
+                <div class="indicator-details">
+                    <div class="indicator-detail-box">
+                        <div class="indicator-detail-label">Interpretation</div>
+                        <div class="indicator-detail-value">{info['interpretation']}</div>
+                    </div>
+                    <div class="indicator-detail-box">
+                        <div class="indicator-detail-label">Backtest Performance</div>
+                        <div class="indicator-detail-value">Signal Ratio: {info['signal_ratio']} | Detection: {info['detection_rate']}</div>
+                    </div>
+                </div>
+            </div>
+        ''')
+    
+    return f'''
+        <h2 class="tab-heading">Indicator Reference Guide</h2>
+        <p class="tab-intro">Each indicator in the composite score is selected based on backtesting against historical stress events.</p>
+        {"".join(cards)}
+    '''
+
+
+def build_backtest_tab() -> str:
+    """Build the Backtest results tab HTML."""
+    return '''
+        <h2 class="tab-heading">Backtesting Methodology & Results</h2>
+        
+        <div class="backtest-section">
+            <h3>How We Test Indicators</h3>
+            <p>Each indicator is evaluated against <strong>6 major market stress events</strong>:</p>
+            <ul class="stress-events">
+                <li><strong>2008-09:</strong> Financial Crisis (56.8% drawdown)</li>
+                <li><strong>2011:</strong> Debt Ceiling Crisis (19.4% drawdown)</li>
+                <li><strong>2015:</strong> China Devaluation (12.4% drawdown)</li>
+                <li><strong>2018:</strong> Fed Tightening (19.8% drawdown)</li>
+                <li><strong>2020:</strong> COVID Crash (33.9% drawdown)</li>
+                <li><strong>2022:</strong> Rate Shock (25.4% drawdown)</li>
+            </ul>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <h4>Signal Ratio</h4>
+                <p>Average percentile during stress / Average percentile during normal times.</p>
+                <p class="metric-note">Higher is better. A ratio of 2.0x means the indicator is twice as elevated during stress vs. normal times.</p>
+            </div>
+            <div class="metric-box">
+                <h4>Detection Rate</h4>
+                <p>Percentage of stress events where the indicator exceeded the 70th percentile.</p>
+                <p class="metric-note">Higher is better. 100% means the indicator caught every major stress event.</p>
+            </div>
+        </div>
+        
+        <h3 class="section-title">Indicator Rankings</h3>
+        <table class="rankings-table">
+            <thead>
+                <tr>
+                    <th>Indicator</th>
+                    <th>Signal Ratio</th>
+                    <th>Detection</th>
+                    <th>Tier</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>HY Credit Spread</td><td>2.19x</td><td>100%</td><td>1</td></tr>
+                <tr><td>BBB Credit Spread</td><td>2.18x</td><td>100%</td><td>1</td></tr>
+                <tr><td>VIX</td><td>1.89x</td><td>100%</td><td>2</td></tr>
+                <tr><td>Defensive Rotation</td><td>1.89x</td><td>100%</td><td>2</td></tr>
+                <tr><td>USD Index</td><td>1.73x</td><td>100%</td><td>2</td></tr>
+                <tr><td>Sector Correlation</td><td>1.75x</td><td>100%</td><td>3</td></tr>
+                <tr><td>VIX Term Structure</td><td>1.63x</td><td>100%</td><td>3</td></tr>
+                <tr><td>Safe Haven (GLD/SPY)</td><td>1.38x</td><td>100%</td><td>4</td></tr>
+                <tr><td>S&P 500 Drawdown</td><td>N/A</td><td>100%</td><td>4</td></tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-title">What Didn\'t Work</h3>
+        <table class="rankings-table failed-table">
+            <thead>
+                <tr>
+                    <th>Indicator</th>
+                    <th>Signal Ratio</th>
+                    <th>Problem</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="failed">RSI (SPY, QQQ, IWM)</td><td class="failed">0.53-0.58x</td><td>Goes DOWN during stress (inverted signal)</td></tr>
+                <tr><td class="failed">10Y-2Y Spread</td><td class="failed">0.61x</td><td>Only 33% detection rate - too slow</td></tr>
+                <tr><td class="failed">SKEW Index</td><td class="failed">0.22x</td><td>Opposite of expected behavior</td></tr>
+                <tr><td class="warning">Fed Funds Rate</td><td class="warning">1.02x</td><td>Policy-driven, not market-driven</td></tr>
+            </tbody>
+        </table>
+        
+        <h3 class="section-title">Weighting Rationale</h3>
+        <div class="rationale-box">
+            <p>Weights are assigned based on three factors:</p>
+            <ol>
+                <li><strong>Signal Ratio</strong> - Higher signal ratios (indicator more elevated during stress) get more weight. Credit spreads (2.18-2.19x) outperformed VIX (1.89x) in distinguishing stress from normal.</li>
+                <li><strong>Detection Rate</strong> - Must catch 100% of major stress events to be included. Curve inversion (33% detection) was excluded despite theoretical importance.</li>
+                <li><strong>Independence</strong> - Indicators measuring different risk dimensions get priority. VIX (fear), credit (default risk), and USD (flight to safety) capture distinct signals.</li>
+            </ol>
+        </div>
+    '''
+
+
 def export_html(output_path: Path | str | None = None, password: str | None = None) -> Path:
     """
-    Generate self-contained HTML dashboard.
+    Generate self-contained HTML dashboard with tabs.
     
     Args:
         output_path: Where to save the HTML file. Defaults to dist/index.html
@@ -124,7 +266,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     # Get regime
     regime = get_regime(result.composite_score)
     
-    # Build signal breakdown rows (sorted by contribution)
+    # Build signal breakdown rows
     sorted_indicators = sorted(
         [(k, v, WEIGHTS.get(k, 0)) for k, v in result.indicators.items()],
         key=lambda x: x[1].percentile * x[2],
@@ -175,11 +317,12 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     else:
         alert_html = ""
         for level, msg in alerts:
-            if level == "HIGH":
-                alert_class = "alert-high"
-            else:
-                alert_class = "alert-elevated"
+            alert_class = "alert-high" if level == "HIGH" else "alert-elevated"
             alert_html += f'''<div class="alert {alert_class}"><span class="alert-level">{level}:</span> {msg}</div>'''
+    
+    # Build tab content
+    indicators_tab = build_indicators_tab(result)
+    backtest_tab = build_backtest_tab()
     
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -191,11 +334,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         
         body {{
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -205,10 +344,7 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             padding: 1.5rem;
         }}
         
-        .container {{
-            max-width: 1400px;
-            margin: 0 auto;
-        }}
+        .container {{ max-width: 1400px; margin: 0 auto; }}
         
         /* Header */
         .header {{
@@ -219,24 +355,29 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             border-bottom: 1px solid #334155;
             margin-bottom: 1rem;
         }}
+        .header-title {{ font-size: 1.5rem; font-weight: 600; color: #f1f5f9; }}
+        .header-subtitle {{ color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }}
+        .header-meta {{ color: #64748b; font-size: 0.7rem; text-align: right; }}
         
-        .header-title {{
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #f1f5f9;
+        /* Tabs */
+        .tabs {{
+            display: flex;
+            gap: 2rem;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 1.5rem;
         }}
-        
-        .header-subtitle {{
-            color: #64748b;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
+        .tab {{
+            padding: 0.75rem 0;
+            color: #94a3b8;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
         }}
-        
-        .header-meta {{
-            color: #64748b;
-            font-size: 0.7rem;
-            text-align: right;
-        }}
+        .tab:hover {{ color: #e2e8f0; }}
+        .tab.active {{ color: #3b82f6; border-bottom-color: #3b82f6; }}
+        .tab-content {{ display: none; }}
+        .tab-content.active {{ display: block; }}
         
         /* Regime Header */
         .regime-header {{
@@ -245,287 +386,107 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             border-left: 4px solid {regime['color']};
             border-radius: 8px;
             padding: 1.5rem 2rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }}
-        
-        .regime-label-small {{
-            color: #94a3b8;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }}
-        
-        .regime-score-row {{
-            display: flex;
-            align-items: baseline;
-            gap: 1rem;
-            margin-top: 0.25rem;
-        }}
-        
-        .regime-score {{
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: {regime['color']};
-            font-family: 'SF Mono', 'Consolas', monospace;
-            line-height: 1;
-        }}
-        
-        .regime-delta {{
-            font-size: 1.25rem;
-            color: {delta_color};
-            font-family: 'SF Mono', 'Consolas', monospace;
-        }}
-        
-        .regime-badge {{
-            background: {regime['color']}22;
-            border: 1px solid {regime['color']};
-            color: {regime['color']};
-            padding: 0.5rem 1.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }}
-        
-        .regime-action {{
-            color: #94a3b8;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-            text-align: right;
-        }}
-        
-        .regime-footer {{
-            color: #64748b;
-            font-size: 0.7rem;
-            margin-top: 1rem;
-            border-top: 1px solid #334155;
-            padding-top: 0.75rem;
-        }}
+        .regime-label-small {{ color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }}
+        .regime-score-row {{ display: flex; align-items: baseline; gap: 1rem; margin-top: 0.25rem; }}
+        .regime-score {{ font-size: 3.5rem; font-weight: 700; color: {regime['color']}; font-family: 'SF Mono', 'Consolas', monospace; line-height: 1; }}
+        .regime-delta {{ font-size: 1.25rem; color: {delta_color}; font-family: 'SF Mono', 'Consolas', monospace; }}
+        .regime-badge {{ background: {regime['color']}22; border: 1px solid {regime['color']}; color: {regime['color']}; padding: 0.5rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 1.1rem; }}
+        .regime-action {{ color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; text-align: right; }}
+        .regime-footer {{ color: #64748b; font-size: 0.7rem; margin-bottom: 1.5rem; }}
         
         /* Grid Layout */
-        .main-grid {{
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }}
-        
-        .bottom-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }}
-        
-        @media (max-width: 1024px) {{
-            .main-grid, .bottom-grid {{
-                grid-template-columns: 1fr;
-            }}
-        }}
+        .main-grid {{ display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }}
+        .bottom-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }}
+        @media (max-width: 1024px) {{ .main-grid, .bottom-grid {{ grid-template-columns: 1fr; }} }}
         
         /* Cards */
-        .card {{
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 1rem 1.5rem;
-        }}
+        .card {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem 1.5rem; }}
+        .card-title {{ color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }}
         
-        .card-title {{
-            color: #94a3b8;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 1rem;
-        }}
-        
-        /* Chart */
-        #chart {{
-            height: 280px;
-        }}
+        #chart {{ height: 280px; }}
         
         /* Alerts */
-        .alert {{
-            border-radius: 4px;
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-            margin-bottom: 0.5rem;
-        }}
-        
-        .alert-ok {{
-            background: #10b98122;
-            border: 1px solid #10b981;
-            color: #6ee7b7;
-        }}
-        
-        .alert-high {{
-            background: #ef444422;
-            border: 1px solid #ef4444;
-            color: #fca5a5;
-        }}
-        
-        .alert-elevated {{
-            background: #f9731622;
-            border: 1px solid #f97316;
-            color: #fdba74;
-        }}
-        
-        .alert-level {{
-            font-weight: 600;
-        }}
+        .alert {{ border-radius: 4px; padding: 0.5rem 1rem; font-size: 0.8rem; margin-bottom: 0.5rem; }}
+        .alert-ok {{ background: #10b98122; border: 1px solid #10b981; color: #6ee7b7; }}
+        .alert-high {{ background: #ef444422; border: 1px solid #ef4444; color: #fca5a5; }}
+        .alert-elevated {{ background: #f9731622; border: 1px solid #f97316; color: #fdba74; }}
+        .alert-level {{ font-weight: 600; }}
         
         /* Signal Breakdown */
-        .signal-row {{
-            margin-bottom: 0.75rem;
-        }}
-        
-        .signal-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.25rem;
-        }}
-        
-        .signal-name {{
-            color: #e2e8f0;
-            font-size: 0.85rem;
-        }}
-        
-        .signal-weight {{
-            color: #64748b;
-            font-size: 0.7rem;
-            margin-left: 0.5rem;
-        }}
-        
-        .signal-value {{
-            font-family: 'SF Mono', monospace;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }}
-        
-        .signal-bar-bg {{
-            background: #0f172a;
-            border-radius: 2px;
-            height: 6px;
-            overflow: hidden;
-        }}
-        
-        .signal-bar {{
-            height: 100%;
-            border-radius: 2px;
-        }}
+        .signal-row {{ margin-bottom: 0.75rem; }}
+        .signal-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }}
+        .signal-name {{ color: #e2e8f0; font-size: 0.85rem; }}
+        .signal-weight {{ color: #64748b; font-size: 0.7rem; margin-left: 0.5rem; }}
+        .signal-value {{ font-family: 'SF Mono', monospace; font-size: 0.9rem; font-weight: 600; }}
+        .signal-bar-bg {{ background: #0f172a; border-radius: 2px; height: 6px; overflow: hidden; }}
+        .signal-bar {{ height: 100%; border-radius: 2px; }}
         
         /* Current Levels */
-        .level-row {{
-            display: flex;
-            justify-content: space-between;
-            padding: 0.4rem 0;
-            border-bottom: 1px solid #334155;
-        }}
+        .level-row {{ display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #334155; }}
+        .level-row:last-child {{ border-bottom: none; }}
+        .level-name {{ color: #94a3b8; font-size: 0.8rem; }}
+        .level-value {{ color: #e2e8f0; font-family: 'SF Mono', monospace; font-size: 0.85rem; }}
         
-        .level-row:last-child {{
-            border-bottom: none;
-        }}
+        /* Indicators Tab */
+        .tab-heading {{ color: #f1f5f9; font-size: 1.5rem; margin-bottom: 0.5rem; }}
+        .tab-intro {{ color: #94a3b8; margin-bottom: 1.5rem; }}
+        .indicator-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }}
+        .indicator-card-header {{ display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }}
+        .indicator-card-title {{ color: #f1f5f9; font-size: 1.1rem; margin: 0; }}
+        .indicator-card-source {{ color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }}
+        .indicator-card-status-wrap {{ text-align: right; }}
+        .indicator-status {{ padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; border: 1px solid; display: inline-block; }}
+        .indicator-weight {{ color: #64748b; font-size: 0.7rem; margin-top: 0.25rem; }}
+        .indicator-description {{ color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1rem; }}
+        .indicator-details {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }}
+        .indicator-detail-box {{ background: #0f172a; padding: 0.75rem; border-radius: 4px; }}
+        .indicator-detail-label {{ color: #64748b; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem; }}
+        .indicator-detail-value {{ color: #e2e8f0; font-size: 0.85rem; }}
+        @media (max-width: 768px) {{ .indicator-details {{ grid-template-columns: 1fr; }} }}
         
-        .level-name {{
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }}
+        /* Backtest Tab */
+        .backtest-section {{ margin-bottom: 2rem; }}
+        .backtest-section h3 {{ color: #f1f5f9; font-size: 1.1rem; margin-bottom: 0.75rem; }}
+        .backtest-section p {{ color: #94a3b8; margin-bottom: 0.5rem; }}
+        .stress-events {{ color: #94a3b8; margin-left: 1.25rem; margin-top: 0.5rem; }}
+        .stress-events li {{ margin-bottom: 0.25rem; }}
+        .metrics-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }}
+        .metric-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; }}
+        .metric-box h4 {{ color: #f1f5f9; margin-bottom: 0.5rem; }}
+        .metric-box p {{ color: #94a3b8; font-size: 0.85rem; margin: 0; }}
+        .metric-note {{ color: #10b981 !important; margin-top: 0.5rem !important; }}
+        .section-title {{ color: #f1f5f9; font-size: 1.1rem; margin: 1.5rem 0 1rem 0; }}
+        .rankings-table {{ width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }}
+        .rankings-table th {{ text-align: left; padding: 0.75rem 1rem; color: #94a3b8; font-size: 0.8rem; border-bottom: 1px solid #334155; }}
+        .rankings-table td {{ padding: 0.75rem 1rem; color: #e2e8f0; font-size: 0.85rem; border-bottom: 1px solid #334155; }}
+        .rankings-table tr:last-child td {{ border-bottom: none; }}
+        .failed {{ color: #ef4444 !important; }}
+        .warning {{ color: #f59e0b !important; }}
+        .rationale-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem 1.5rem; }}
+        .rationale-box p {{ color: #94a3b8; margin-bottom: 0.75rem; }}
+        .rationale-box ol {{ color: #94a3b8; margin-left: 1.25rem; }}
+        .rationale-box li {{ margin-bottom: 0.5rem; }}
+        .rationale-box strong {{ color: #e2e8f0; }}
+        @media (max-width: 768px) {{ .metrics-grid {{ grid-template-columns: 1fr; }} }}
         
-        .level-value {{
-            color: #e2e8f0;
-            font-family: 'SF Mono', monospace;
-            font-size: 0.85rem;
-        }}
-        
-        /* Login overlay styles */
-        .login-overlay {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #0f172a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }}
-        
-        .login-overlay.hidden {{
-            display: none;
-        }}
-        
-        .login-box {{
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 32px;
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-        }}
-        
-        .login-title {{
-            font-size: 18px;
-            font-weight: 600;
-            color: #f1f5f9;
-            margin-bottom: 8px;
-        }}
-        
-        .login-subtitle {{
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 24px;
-        }}
-        
-        .login-input {{
-            width: 100%;
-            padding: 12px 16px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #e2e8f0;
-            font-size: 14px;
-            margin-bottom: 16px;
-            outline: none;
-        }}
-        
-        .login-input:focus {{
-            border-color: #3b82f6;
-        }}
-        
-        .login-button {{
-            width: 100%;
-            padding: 12px 16px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-        }}
-        
-        .login-button:hover {{
-            background: #2563eb;
-        }}
-        
-        .login-error {{
-            color: #ef4444;
-            font-size: 13px;
-            margin-top: 12px;
-            display: none;
-        }}
-        
-        .dashboard-content {{
-            display: none;
-        }}
-        
-        .dashboard-content.visible {{
-            display: block;
-        }}
+        /* Login overlay */
+        .login-overlay {{ position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 1000; }}
+        .login-overlay.hidden {{ display: none; }}
+        .login-box {{ background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 32px; width: 100%; max-width: 360px; text-align: center; }}
+        .login-title {{ font-size: 18px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }}
+        .login-subtitle {{ font-size: 13px; color: #64748b; margin-bottom: 24px; }}
+        .login-input {{ width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; margin-bottom: 16px; outline: none; }}
+        .login-input:focus {{ border-color: #3b82f6; }}
+        .login-button {{ width: 100%; padding: 12px 16px; background: #3b82f6; border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }}
+        .login-button:hover {{ background: #2563eb; }}
+        .login-error {{ color: #ef4444; font-size: 13px; margin-top: 12px; display: none; }}
+        .dashboard-content {{ display: none; }}
+        .dashboard-content.visible {{ display: block; }}
     </style>
 </head>
 <body>
@@ -548,95 +509,100 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
                 <div class="header-title">Market Stress Monitor</div>
                 <div class="header-subtitle">Asset Management Risk Dashboard</div>
             </div>
-            <div class="header-meta">
-                Data: FRED + Yahoo Finance<br>Refresh: Daily EOD
-            </div>
+            <div class="header-meta">Data: FRED + Yahoo Finance<br>Refresh: Daily EOD</div>
         </div>
         
-        <div class="regime-header">
-            <div>
-                <div class="regime-label-small">Market Stress Level</div>
-                <div class="regime-score-row">
-                    <span class="regime-score">{result.composite_score:.1f}</span>
-                    <span class="regime-delta">{delta_str} (5d)</span>
+        <div class="tabs">
+            <div class="tab active" data-tab="dashboard">Dashboard</div>
+            <div class="tab" data-tab="indicators">Indicators</div>
+            <div class="tab" data-tab="backtest">Backtest</div>
+        </div>
+        
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="regime-header">
+                <div>
+                    <div class="regime-label-small">Market Stress Level</div>
+                    <div class="regime-score-row">
+                        <span class="regime-score">{result.composite_score:.1f}</span>
+                        <span class="regime-delta">{delta_str} (5d)</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="regime-badge">{regime['label']}</div>
+                    <div class="regime-action">{regime['action']}</div>
                 </div>
             </div>
-            <div style="text-align: right;">
-                <div class="regime-badge">{regime['label']}</div>
-                <div class="regime-action">{regime['action']}</div>
-            </div>
-        </div>
-        <div class="regime-footer">
-            As of {result.as_of_date.strftime('%Y-%m-%d')} | Updated {datetime.now().strftime('%H:%M')}
-        </div>
-        
-        <div class="main-grid">
-            <div class="card">
-                <div class="card-title">90-Day Composite History</div>
-                <div id="chart"></div>
+            <div class="regime-footer">As of {result.as_of_date.strftime('%Y-%m-%d')} | Updated {datetime.now().strftime('%H:%M')}</div>
+            
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-title">90-Day Composite History</div>
+                    <div id="chart"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Alerts</div>
+                    {alert_html}
+                </div>
             </div>
             
-            <div class="card">
-                <div class="card-title">Alerts</div>
-                {alert_html}
+            <div class="bottom-grid">
+                <div class="card">
+                    <div class="card-title">Signal Breakdown (by contribution)</div>
+                    {"".join(signal_rows)}
+                </div>
+                <div class="card">
+                    <div class="card-title">Current Levels</div>
+                    {"".join(level_rows)}
+                </div>
             </div>
         </div>
         
-        <div class="bottom-grid">
-            <div class="card">
-                <div class="card-title">Signal Breakdown (by contribution)</div>
-                {"".join(signal_rows)}
-            </div>
-            
-            <div class="card">
-                <div class="card-title">Current Levels</div>
-                {"".join(level_rows)}
-            </div>
+        <!-- Indicators Tab -->
+        <div class="tab-content" id="tab-indicators">
+            {indicators_tab}
+        </div>
+        
+        <!-- Backtest Tab -->
+        <div class="tab-content" id="tab-backtest">
+            {backtest_tab}
         </div>
     </div>
     </div>
     
     <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {{
+            tab.addEventListener('click', () => {{
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            }});
+        }});
+        
+        // Chart
         const dates = {json.dumps(chart_dates)};
         const values = {json.dumps(chart_values)};
         
         const trace = {{
-            x: dates,
-            y: values,
-            type: 'scatter',
-            mode: 'lines',
+            x: dates, y: values,
+            type: 'scatter', mode: 'lines',
             line: {{ color: '#3b82f6', width: 2 }},
-            fill: 'tozeroy',
-            fillcolor: 'rgba(59, 130, 246, 0.1)',
+            fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)',
             hovertemplate: '%{{x|%b %d, %Y}}<br>Score: %{{y:.1f}}<extra></extra>',
         }};
         
         const layout = {{
-            paper_bgcolor: 'transparent',
-            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
             margin: {{ t: 10, r: 10, b: 40, l: 40 }},
-            xaxis: {{
-                showgrid: true,
-                gridcolor: '#1e293b',
-                color: '#64748b',
-                tickfont: {{ size: 10 }},
-                tickformat: '%b %d',
-            }},
-            yaxis: {{
-                showgrid: true,
-                gridcolor: '#1e293b',
-                color: '#64748b',
-                tickfont: {{ size: 10 }},
-                range: [0, 100],
-                dtick: 25,
-            }},
+            xaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, tickformat: '%b %d' }},
+            yaxis: {{ showgrid: true, gridcolor: '#1e293b', color: '#64748b', tickfont: {{ size: 10 }}, range: [0, 100], dtick: 25 }},
             shapes: [
-                // Regime bands
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 30, fillcolor: '#10b981', opacity: 0.08, line: {{ width: 0 }} }},
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 50, fillcolor: '#f59e0b', opacity: 0.08, line: {{ width: 0 }} }},
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 70, fillcolor: '#f97316', opacity: 0.08, line: {{ width: 0 }} }},
                 {{ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 100, fillcolor: '#ef4444', opacity: 0.08, line: {{ width: 0 }} }},
-                // Threshold lines
                 {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 30, y1: 30, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
                 {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 50, y1: 50, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
                 {{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 70, y1: 70, line: {{ color: '#475569', width: 1, dash: 'dot' }} }},
@@ -644,14 +610,11 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             hovermode: 'x unified',
         }};
         
-        const config = {{ displayModeBar: false, responsive: true }};
-        
-        Plotly.newPlot('chart', [trace], layout, config);
+        Plotly.newPlot('chart', [trace], layout, {{ displayModeBar: false, responsive: true }});
     </script>
     {"" if not password_hash else f'''
     <script>
         const HASH = "{password_hash}";
-        
         async function sha256(text) {{
             const encoder = new TextEncoder();
             const data = encoder.encode(text);
@@ -659,23 +622,17 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
         }}
-        
         async function checkAuth() {{
             const stored = sessionStorage.getItem("dashboard_auth");
-            if (stored === HASH) {{
-                showDashboard();
-            }}
+            if (stored === HASH) showDashboard();
         }}
-        
         function showDashboard() {{
             document.getElementById("loginOverlay").classList.add("hidden");
             document.getElementById("dashboardContent").classList.add("visible");
         }}
-        
         async function handleLogin() {{
             const password = document.getElementById("passwordInput").value;
             const hash = await sha256(password);
-            
             if (hash === HASH) {{
                 sessionStorage.setItem("dashboard_auth", hash);
                 showDashboard();
@@ -684,12 +641,10 @@ def export_html(output_path: Path | str | None = None, password: str | None = No
                 document.getElementById("passwordInput").value = "";
             }}
         }}
-        
         document.getElementById("loginButton").addEventListener("click", handleLogin);
         document.getElementById("passwordInput").addEventListener("keypress", (e) => {{
             if (e.key === "Enter") handleLogin();
         }});
-        
         checkAuth();
     </script>
     '''}
@@ -713,18 +668,8 @@ def main() -> None:
     import argparse
     
     parser = argparse.ArgumentParser(description="Export dashboard as HTML")
-    parser.add_argument(
-        "-o", "--output",
-        type=str,
-        default=None,
-        help="Output path (default: dist/index.html)"
-    )
-    parser.add_argument(
-        "-p", "--password",
-        type=str,
-        default=None,
-        help="Password for client-side protection (or set DASHBOARD_PASSWORD env var)"
-    )
+    parser.add_argument("-o", "--output", type=str, default=None, help="Output path (default: dist/index.html)")
+    parser.add_argument("-p", "--password", type=str, default=None, help="Password for client-side protection")
     args = parser.parse_args()
     
     try:

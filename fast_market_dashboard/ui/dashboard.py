@@ -73,10 +73,10 @@ def render_regime_header(result: CompositeResult, history: pd.DataFrame) -> None
                 <div>
                     <div style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">
                         Market Stress Level
-                    </div>
+            </div>
                     <div style="display: flex; align-items: baseline; gap: 1rem; margin-top: 0.25rem;">
                         <span style="font-size: 3.5rem; font-weight: 700; color: {regime['color']}; font-family: 'SF Mono', 'Consolas', monospace;">
-                            {result.composite_score:.1f}
+                {result.composite_score:.1f}
                         </span>
                         <span style="font-size: 1.25rem; color: {delta_color}; font-family: 'SF Mono', 'Consolas', monospace;">
                             {delta_str} (5d)
@@ -98,7 +98,7 @@ def render_regime_header(result: CompositeResult, history: pd.DataFrame) -> None
                     <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem;">
                         {regime['action']}
                     </div>
-                </div>
+            </div>
             </div>
             <div style="color: #64748b; font-size: 0.7rem; margin-top: 1rem; border-top: 1px solid #334155; padding-top: 0.75rem;">
                 As of {result.as_of_date.strftime('%Y-%m-%d')} | Updated {datetime.now().strftime('%H:%M')}
@@ -138,7 +138,7 @@ def render_indicator_panel(result: CompositeResult) -> None:
         
         alert = "!" if pct >= 80 else ""
         
-        st.markdown(
+            st.markdown(
             f"""<div style="margin-bottom: 0.75rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
                     <span style="color: #e2e8f0; font-size: 0.85rem;">
@@ -172,23 +172,23 @@ def render_history_chart(history: pd.DataFrame, days: int = 90) -> None:
     for thresh in [30, 50, 70]:
         fig.add_hline(y=thresh, line_dash="dot", line_color="#475569", line_width=1)
     
-    fig.add_trace(go.Scatter(
+                fig.add_trace(go.Scatter(
         x=history.index, y=history["composite"],
         mode="lines", line=dict(color="#3b82f6", width=2),
         fill="tozeroy", fillcolor="rgba(59, 130, 246, 0.1)",
         hovertemplate="%{x|%b %d, %Y}<br>Score: %{y:.1f}<extra></extra>",
     ))
     
-    fig.add_trace(go.Scatter(
+                fig.add_trace(go.Scatter(
         x=[history.index[-1]], y=[history["composite"].iloc[-1]],
         mode="markers", marker=dict(color=get_regime(history["composite"].iloc[-1])["color"], size=10),
         hoverinfo="skip",
-    ))
-    
-    fig.update_layout(
+                ))
+                
+                fig.update_layout(
         height=280, margin=dict(l=0, r=0, t=30, b=0),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        showlegend=False,
+                    showlegend=False,
         title=dict(text=f"{days}-Day Composite History", font=dict(size=12, color="#94a3b8"), x=0),
         xaxis=dict(showgrid=True, gridcolor="#1e293b", tickfont=dict(color="#64748b", size=10), tickformat="%b %d"),
         yaxis=dict(showgrid=True, gridcolor="#1e293b", tickfont=dict(color="#64748b", size=10), range=[0, 100], dtick=25),
@@ -224,7 +224,7 @@ def render_raw_values(result: CompositeResult) -> None:
             formatted = f"{val:.3f}"
         elif "/" in indicator.name or "Rotation" in indicator.name:
             formatted = f"{val:.3f}"
-        else:
+            else:
             formatted = f"{val:.2f}"
         
         st.markdown(
@@ -512,6 +512,104 @@ def render_backtest_tab() -> None:
         })
     
     st.dataframe(pd.DataFrame(weights_data), use_container_width=True, hide_index=True)
+    
+    # Non-linear model comparison section
+    st.markdown("---")
+    st.markdown("## Non-Linear Model Comparison")
+    
+    st.markdown("""
+    We tested multiple composite score formulations to see if non-linear relationships 
+    improve fast market detection. Each model was backtested against the 6 historical stress events.
+    """)
+    
+    # Model descriptions
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <h4 style="color: #f1f5f9; margin: 0 0 0.5rem 0;">Linear (Baseline)</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                Simple weighted average of indicator percentiles.
+                Each indicator contributes independently.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <h4 style="color: #f1f5f9; margin: 0 0 0.5rem 0;">Convex</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                Power transformation (pct^1.4) amplifies extreme readings.
+                85th percentile matters more than 50th.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem;">
+            <h4 style="color: #f1f5f9; margin: 0 0 0.5rem 0;">Regime</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                Different weights for calm vs. stress regimes.
+                Emphasize credit (leading) when calm, VIX (confirming) in stress.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <h4 style="color: #f1f5f9; margin: 0 0 0.5rem 0;">Convergence</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                Multiplier when multiple indicators spike together.
+                3+ elevated indicators = compounding risk (diversification fails).
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <h4 style="color: #3b82f6; margin: 0 0 0.5rem 0;">Hybrid (Recommended)</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                Combines convex + regime + convergence + lead-lag.
+                Most sensitive to stress but higher false positive rate.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("### Model Performance")
+    
+    # Model comparison table
+    model_data = [
+        {"Model": "Hybrid", "Detection": "100%", "Signal Ratio": "1.82x", "Lead Days": "0.8", "Precision": "42%", "FP Rate": "9.7%"},
+        {"Model": "Convergence", "Detection": "100%", "Signal Ratio": "1.73x", "Lead Days": "1.8", "Precision": "40%", "FP Rate": "10.8%"},
+        {"Model": "Convex", "Detection": "100%", "Signal Ratio": "1.53x", "Lead Days": "0.0", "Precision": "70%", "FP Rate": "0.8%"},
+        {"Model": "Linear", "Detection": "100%", "Signal Ratio": "1.47x", "Lead Days": "0.0", "Precision": "70%", "FP Rate": "1.1%"},
+        {"Model": "Regime", "Detection": "100%", "Signal Ratio": "1.45x", "Lead Days": "0.0", "Precision": "71%", "FP Rate": "0.9%"},
+    ]
+    
+    st.dataframe(pd.DataFrame(model_data), use_container_width=True, hide_index=True)
+    
+    st.markdown("### Interpretation")
+    
+    st.markdown("""
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem;">
+        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0 0 0.75rem 0;">
+            <strong style="color: #3b82f6;">Hybrid model</strong> shows the best signal ratio (1.82x vs 1.47x baseline), 
+            meaning it distinguishes stress from calm markets more clearly. Peak scores during crises reach 95-99 
+            vs. 71-73 for linear.
+        </p>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0 0 0.75rem 0;">
+            <strong style="color: #f59e0b;">Tradeoff:</strong> Higher sensitivity comes with more false positives 
+            (42% precision vs 70%). The model fires more often outside stress events.
+        </p>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+            <strong style="color: #10b981;">Recommendation:</strong> Use <strong>linear</strong> for daily monitoring 
+            (fewer false alarms). Switch to <strong>hybrid</strong> lens when linear crosses 50+ to amplify early 
+            warning signals.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # =============================================================================
