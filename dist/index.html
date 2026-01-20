@@ -888,8 +888,14 @@
             // Calculate S&P returns based on selected type
             let sp500Adjusted, sp500Label, sp500HoverTemplate;
             if (returnType === 'daily') {
-                // Daily returns: difference from previous day
-                sp500Adjusted = sp500.map((v, i) => i === 0 ? 0 : v - sp500[i - 1]);
+                // Daily returns: proper calculation from cumulative returns
+                // Formula: daily = ((1 + cum_i/100) / (1 + cum_{i-1}/100) - 1) * 100
+                sp500Adjusted = sp500.map((v, i) => {
+                    if (i === 0) return 0;
+                    const priceToday = 1 + v / 100;
+                    const priceYesterday = 1 + sp500[i - 1] / 100;
+                    return (priceToday / priceYesterday - 1) * 100;
+                });
                 sp500Label = 'S&P Daily Return';
                 sp500HoverTemplate = 'S&P Daily: %{y:+.2f}%<extra></extra>';
             } else {
