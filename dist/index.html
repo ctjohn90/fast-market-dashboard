@@ -249,6 +249,11 @@
                 <option value="convergence">Convergence (multi-indicator)</option>
                 <option value="hybrid">Hybrid (combined)</option>
             </select>
+            <label style="margin-left: 2rem;">S&P Returns:</label>
+            <select class="period-select" id="returnSelect">
+                <option value="cumulative" selected>Cumulative</option>
+                <option value="daily">Daily</option>
+            </select>
         </div>
         
         <div class="tabs">
@@ -842,13 +847,22 @@
         // Period selector
         document.getElementById('periodSelect').addEventListener('change', (e) => {
             const model = document.getElementById('modelSelect').value;
-            renderChart(parseInt(e.target.value), model);
+            const returnType = document.getElementById('returnSelect').value;
+            renderChart(parseInt(e.target.value), model, returnType);
         });
         
         // Model selector
         document.getElementById('modelSelect').addEventListener('change', (e) => {
             const days = parseInt(document.getElementById('periodSelect').value);
-            renderChart(days, e.target.value);
+            const returnType = document.getElementById('returnSelect').value;
+            renderChart(days, e.target.value, returnType);
+        });
+        
+        // Return type selector
+        document.getElementById('returnSelect').addEventListener('change', (e) => {
+            const days = parseInt(document.getElementById('periodSelect').value);
+            const model = document.getElementById('modelSelect').value;
+            renderChart(days, model, e.target.value);
         });
         
         // Resize chart on window resize
@@ -856,7 +870,7 @@
             Plotly.Plots.resize('chart');
         });
         
-        function renderChart(days, model = 'linear') {
+        function renderChart(days, model = 'linear', returnType = 'cumulative') {
             const endIdx = CHART_DATA.dates.length;
             const startIdx = Math.max(0, endIdx - days);
             const dates = CHART_DATA.dates.slice(startIdx);
@@ -871,9 +885,20 @@
                 hybrid: 'Stress Score (Hybrid)'
             };
             
-            // Recalculate S&P returns from period start (rebased to 0)
-            const sp500Base = sp500[0] || 0;
-            const sp500Adjusted = sp500.map(v => v - sp500Base);
+            // Calculate S&P returns based on selected type
+            let sp500Adjusted, sp500Label, sp500HoverTemplate;
+            if (returnType === 'daily') {
+                // Daily returns: difference from previous day
+                sp500Adjusted = sp500.map((v, i) => i === 0 ? 0 : v - sp500[i - 1]);
+                sp500Label = 'S&P Daily Return';
+                sp500HoverTemplate = 'S&P Daily: %{y:+.2f}%<extra></extra>';
+            } else {
+                // Cumulative: rebased to start of period
+                const sp500Base = sp500[0] || 0;
+                sp500Adjusted = sp500.map(v => v - sp500Base);
+                sp500Label = 'S&P Cumulative';
+                sp500HoverTemplate = 'S&P: %{y:+.1f}%<extra></extra>';
+            }
             
             // Filter events for this period
             const startDate = dates[0];
@@ -914,9 +939,9 @@
                 x: dates, y: sp500Adjusted,
                 type: 'scatter', mode: 'lines',
                 line: { color: '#a855f7', width: 2 },
-                name: 'S&P 500 Return',
+                name: sp500Label,
                 yaxis: 'y2',
-                hovertemplate: 'S&P: %{y:+.1f}%<extra></extra>',
+                hovertemplate: sp500HoverTemplate,
             };
             
             // Calculate y2 range - INVERTED (high values at bottom, low at top)
@@ -940,7 +965,7 @@
                     range: [maxSP + spPadding, minSP - spPadding],  // INVERTED: high at bottom
                     tickformat: '+.0f',
                     ticksuffix: '%',
-                    title: { text: 'S&P 500 Return (inv)', font: { size: 12, color: '#a855f7' } }
+                    title: { text: returnType === 'daily' ? 'Daily Return (inv)' : 'Cumulative (inv)', font: { size: 12, color: '#a855f7' } }
                 },
                 shapes: shapes,
                 hovermode: 'x unified',
@@ -976,7 +1001,8 @@
             const dashboard = document.getElementById('dashboardContent');
             if (dashboard && dashboard.classList.contains('visible')) {
                 const model = document.getElementById('modelSelect').value;
-                renderChart(730, model);
+                const returnType = document.getElementById('returnSelect').value;
+                renderChart(730, model, returnType);
                 chartInitialized = true;
                 setTimeout(() => Plotly.Plots.resize('chart'), 100);
             }

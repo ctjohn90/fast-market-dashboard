@@ -157,8 +157,15 @@ def render_indicator_panel(result: CompositeResult) -> None:
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache | None = None) -> None:
-    """Render composite history with regime bands and S&P 500 overlay."""
+def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache | None = None, return_type: str = "cumulative") -> None:
+    """Render composite history with regime bands and S&P 500 overlay.
+    
+    Args:
+        history: DataFrame with composite scores
+        days: Number of days to display
+        cache: DataCache for fetching S&P 500 data
+        return_type: "cumulative" or "daily" returns
+    """
     if history.empty:
         st.info("Insufficient history for chart")
         return
@@ -193,24 +200,33 @@ def render_history_chart(history: pd.DataFrame, days: int = 90, cache: DataCache
         hoverinfo="skip", showlegend=False,
     ), secondary_y=False)
     
-    # S&P 500 overlay (secondary y-axis) - show cumulative return
+    # S&P 500 overlay (secondary y-axis)
     if cache is not None:
         sp500 = cache.get_series("SP500")
         if not sp500.empty:
             # Align with history dates
             sp_aligned = sp500["value"].reindex(history.index, method="ffill")
             if not sp_aligned.empty and len(sp_aligned.dropna()) > 0:
-                # Calculate cumulative return from start of period
                 first_valid = sp_aligned.first_valid_index()
                 if first_valid is not None:
-                    base_price = sp_aligned.loc[first_valid]
-                    cumulative_return = ((sp_aligned / base_price) - 1) * 100
+                    if return_type == "daily":
+                        # Daily returns: pct change from previous day
+                        sp_returns = sp_aligned.pct_change() * 100
+                        sp_returns = sp_returns.fillna(0)
+                        trace_name = "S&P Daily Return"
+                        hover_template = "S&P Daily: %{y:+.2f}%<extra></extra>"
+                    else:
+                        # Cumulative returns from start of period
+                        base_price = sp_aligned.loc[first_valid]
+                        sp_returns = ((sp_aligned / base_price) - 1) * 100
+                        trace_name = "S&P Cumulative"
+                        hover_template = "S&P: %{y:+.1f}%<extra></extra>"
                     
-                fig.add_trace(go.Scatter(
-                        x=cumulative_return.index, y=cumulative_return,
+                    fig.add_trace(go.Scatter(
+                        x=sp_returns.index, y=sp_returns,
                         mode="lines", line=dict(color="#a855f7", width=1.5, dash="dot"),
-                        name="S&P 500 Return",
-                        hovertemplate="S&P: %{y:+.1f}%<extra></extra>",
+                        name=trace_name,
+                        hovertemplate=hover_template,
                     ), secondary_y=True)
     
     # Key market events with full descriptions for legend
@@ -367,7 +383,7 @@ def render_alerts(result: CompositeResult, history: pd.DataFrame) -> None:
         )
 
 
-def render_dashboard_tab(calc: IndicatorCalculator, result: CompositeResult, history: pd.DataFrame, days: int = 90) -> None:
+def render_dashboard_tab(calc: IndicatorCalculator, result: CompositeResult, history: pd.DataFrame, days: int = 90, return_type: str = "cumulative") -> None:
     """Render the main dashboard tab."""
     render_regime_header(result, history)
     
@@ -375,7 +391,7 @@ def render_dashboard_tab(calc: IndicatorCalculator, result: CompositeResult, his
     render_alerts(result, history)
     
     # Full-width chart for better annotation readability
-    render_history_chart(history, days, cache=calc.cache)
+    render_history_chart(history, days, cache=calc.cache, return_type=return_type)
     
     st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
     
@@ -984,7 +1000,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
     
-    # Period selector
+    # Period and return type selectors
     period_options = {
         "90 Days": 90,
         "180 Days": 180,
@@ -994,7 +1010,12 @@ def main() -> None:
         "All Available": 5000,
     }
     
-    col_period, col_spacer = st.columns([1, 4])
+    return_options = {
+        "Cumulative Return": "cumulative",
+        "Daily Return": "daily",
+    }
+    
+    col_period, col_return, col_spacer = st.columns([1, 1, 3])
     with col_period:
         selected_period = st.selectbox(
             "History Period",
@@ -1002,7 +1023,15 @@ def main() -> None:
             index=0,
             label_visibility="collapsed",
         )
+    with col_return:
+        selected_return = st.selectbox(
+            "S&P Return Type",
+            options=list(return_options.keys()),
+            index=0,
+            label_visibility="collapsed",
+        )
     history_days = period_options[selected_period]
+    return_type = return_options[selected_return]
     
     # Load data
     with st.spinner("Loading..."):
@@ -1018,7 +1047,7 @@ def main() -> None:
     tab1, tab2, tab3, tab4 = st.tabs(["Dashboard", "Indicators", "Backtest", "Models"])
     
     with tab1:
-        render_dashboard_tab(calc, result, history, history_days)
+        render_dashboard_tab(calc, result, history, history_days, return_type)
     
     with tab2:
         render_indicators_tab(result)
